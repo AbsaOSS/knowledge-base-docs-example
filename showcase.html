@@ -1,0 +1,244 @@
+<!--
+  Copyright 2026 ABSA Group Limited
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Knowledge Base Docs Example — MkDocs Template</title>
+  <meta name="description" content="A ready-to-use MkDocs template for publishing documentation to the Knowledge Base." />
+  <link rel="stylesheet" href="docs/style.css" />
+</head>
+<body>
+<div id="showcase-root">
+
+  <!-- ── Navigation ── -->
+  <nav class="sc-nav" aria-label="Site navigation">
+    <a href="index.html" class="sc-nav__logo" aria-label="Go to home">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="height:28px;width:28px;" aria-hidden="true">
+        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+      </svg>
+      <span class="sc-nav__title">Docs Example</span>
+    </a>
+    <div class="sc-nav__links">
+      <a href="docs/"          class="sc-nav__link">Overview</a>
+      <a href="docs/customising/"        class="sc-nav__link">Customising</a>
+      <a href="docs/adding-pages/"       class="sc-nav__link">Adding Pages</a>
+      <a href="docs/"          class="sc-nav__cta">Read the Docs</a>
+    </div>
+  </nav>
+  <!-- ── /Navigation ── -->
+
+  <!-- ── Hero ── -->
+  <section class="sc-hero" aria-label="Hero">
+    <div class="sc-hero__bg" role="presentation"></div>
+    <div class="sc-hero__content">
+      <span class="sc-hero__eyebrow">MkDocs Template</span>
+      <h1 class="sc-hero__title">
+        Publish your docs to the<br>
+        <span>Knowledge Base</span>
+      </h1>
+      <p class="sc-hero__sub">
+        A minimal, branded template. Clone it, write Markdown, tag a release —
+        your documentation is live.
+      </p>
+      <div class="sc-hero__actions">
+        <a href="docs/" class="sc-btn sc-btn--primary">Read the Docs</a>
+        <a href="#"
+           class="sc-btn sc-btn--outline">Full User Guide</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── What is included ── -->
+  <section aria-label="What is included">
+    <div class="sc-section">
+      <p class="sc-section__label">What is included</p>
+      <h2 class="sc-section__title">Everything you need, nothing you don't</h2>
+      <p class="sc-section__sub">
+        The template ships with a pre-built theme, a build script, and a CI/CD pipeline.
+        You only ever touch your content and configuration.
+      </p>
+
+      <div class="sc-features">
+
+        <div class="sc-feature-card">
+          <div class="sc-feature-card__icon">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+              <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+            </svg>
+          </div>
+          <h3 class="sc-feature-card__title">Markdown-first content</h3>
+          <p class="sc-feature-card__text">
+            Write in plain Markdown. MkDocs builds it into polished HTML — no HTML knowledge needed.
+          </p>
+        </div>
+
+        <div class="sc-feature-card">
+          <div class="sc-feature-card__icon">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="12" cy="12" r="10"/>
+              <polyline points="12 6 12 12 16 14"/>
+            </svg>
+          </div>
+          <h3 class="sc-feature-card__title">Zero build setup</h3>
+          <p class="sc-feature-card__text">
+            Run <code>npm run build</code> and you're done. The script installs dependencies, builds the docs, and packages the artefact.
+          </p>
+        </div>
+
+        <div class="sc-feature-card">
+          <div class="sc-feature-card__icon">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <polyline points="16 18 22 12 16 6"/>
+              <polyline points="8 6 2 12 8 18"/>
+            </svg>
+          </div>
+          <h3 class="sc-feature-card__title">Branded theme</h3>
+          <p class="sc-feature-card__text">
+            Pre-built CSS with a customisable colour palette and typography. Theme files stay untouched.
+          </p>
+        </div>
+
+        <div class="sc-feature-card">
+          <div class="sc-feature-card__icon">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            </svg>
+          </div>
+          <h3 class="sc-feature-card__title">Headless &amp; standalone modes</h3>
+          <p class="sc-feature-card__text">
+            Build a standalone site or a headless fragment that slots directly into the knowledge base chrome.
+          </p>
+        </div>
+
+        <div class="sc-feature-card">
+          <div class="sc-feature-card__icon">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="12" cy="12" r="3"/>
+              <path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/>
+            </svg>
+          </div>
+          <h3 class="sc-feature-card__title">CI/CD pipeline included</h3>
+          <p class="sc-feature-card__text">
+            A GitHub Actions workflow builds and packages your docs on every tagged release — just push and go.
+          </p>
+        </div>
+
+        <div class="sc-feature-card">
+          <div class="sc-feature-card__icon">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <line x1="16" y1="13" x2="8" y2="13"/>
+              <line x1="16" y1="17" x2="8" y2="17"/>
+              <polyline points="10 9 9 9 8 9"/>
+            </svg>
+          </div>
+          <h3 class="sc-feature-card__title">Expandable structure</h3>
+          <p class="sc-feature-card__text">
+            Add Markdown pages or standalone HTML pages at any time. Navigation updates with a single line in <code>mkdocs.yml</code>.
+          </p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ── How it works ── -->
+  <div class="sc-steps-bg">
+    <section aria-label="How it works">
+      <div class="sc-section">
+        <p class="sc-section__label">How it works</p>
+        <h2 class="sc-section__title">From clone to live docs in three steps</h2>
+        <p class="sc-section__sub">
+          No framework expertise required. The template is designed for teams who want to focus on content, not tooling.
+        </p>
+
+        <div class="sc-steps">
+
+          <div class="sc-step">
+            <div class="sc-step__num">1</div>
+            <div>
+              <p class="sc-step__title">Clone and configure</p>
+              <p class="sc-step__text">
+                Clone this repo, update <code>marketplace.json</code> with your
+                <code>slug</code> and <code>name</code>, and set <code>site_name</code>
+                in <code>mkdocs.yml</code>. That's the only configuration you need.
+              </p>
+            </div>
+          </div>
+
+          <div class="sc-step">
+            <div class="sc-step__num">2</div>
+            <div>
+              <p class="sc-step__title">Write your content</p>
+              <p class="sc-step__text">
+                Replace the starter Markdown files in <code>docs/</code> with your own
+                content. Add pages by creating <code>.md</code> files and listing them in
+                the <code>nav:</code> section of <code>mkdocs.yml</code>.
+              </p>
+            </div>
+          </div>
+
+          <div class="sc-step">
+            <div class="sc-step__num">3</div>
+            <div>
+              <p class="sc-step__title">Tag a release</p>
+              <p class="sc-step__text">
+                Push a version tag (e.g. <code>v1.0.0</code>). The GitHub Actions
+                workflow builds your docs, packages them, and attaches the artefact
+                to the release — ready for the knowledge base to consume.
+              </p>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- ── CTA banner ── -->
+  <section class="sc-cta" aria-label="Call to action">
+    <h2 class="sc-cta__title">Ready to publish your documentation?</h2>
+    <p class="sc-cta__sub">
+      Read the template docs to get started, or visit the full user guide
+      for setup and registration.
+    </p>
+    <div class="sc-cta__actions">
+      <a href="docs/" class="sc-btn sc-btn--light">Get Started</a>
+      <a href="#"
+         class="sc-btn sc-btn--ghost">Full User Guide</a>
+    </div>
+  </section>
+
+  <!-- ── Footer ── -->
+  <footer class="sc-footer">
+    <span>Knowledge Base Docs Example &mdash; MkDocs Template</span>
+    <span>
+      <a href="docs/">Docs</a>
+      &ensp;&middot;&ensp;
+      <a href="#">
+        Knowledge Base
+      </a>
+    </span>
+  </footer>
+
+</div><!-- /#showcase-root -->
+</body>
+</html>

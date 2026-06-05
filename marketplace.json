@@ -1,0 +1,9 @@
+{
+  "marketplaceVersion": "1",
+  "name": "Knowledge Base User Guide",
+  "slug": "user-guide",
+  "description": "Everything you need to create and publish your own documentation to the Knowledge Base — tools setup, template walkthrough, and registration steps.",
+  "icon": "book-open",
+  "tags": ["guide", "getting-started", "template"],
+  "entryPoint": "index.html"
+}

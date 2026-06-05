@@ -1,0 +1,11 @@
+{
+  "name": "knowledge-base-docs-example",
+  "version": "2.0.0",
+  "description": "MkDocs template for publishing documentation to the Knowledge Base.",
+  "scripts": {
+    "build":          "node run.js",
+    "build:headless": "node run.js --headless",
+    "preview":        "node run.js --preview",
+    "dev":            "node run.js --dev"
+  }
+}
