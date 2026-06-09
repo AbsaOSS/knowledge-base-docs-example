@@ -29,12 +29,16 @@ Set `SKIP_PIP_INSTALL=1` to skip automatic pip install in managed environments.
 
 ## Build Pipeline (scripts/pack.py)
 
-1. Install deps from `requirements.txt` (just MkDocs 1.6.1)
-2. Merge `mkdocs.yml` + any wiki pages from `docs/wiki/` into temporary `mkdocs-build.yml`
-3. Run `mkdocs build` against merged config
-4. Copy `showcase.html` as `dist/index.html` entry point (headless strips `<nav>`)
-5. Generate `dist/marketplace.json` with pages manifest derived from nav config
-6. Package into `dist.tar.gz`
+1. Install deps from `requirements.txt` (MkDocs 1.6.1 + Jinja2)
+2. Auto-generate nav from `docs/` frontmatter (title, order, section) + wiki pages
+3. Write merged config to temporary `mkdocs-build.yml`
+4. Run `mkdocs build` against merged config
+5. Render `showcase.html` template with `data/showcase.yml` → `dist/index.html` (headless strips `<nav>`)
+6. Copy `showcase.css` → `dist/showcase.css`
+7. Generate `dist/marketplace.json` with pages manifest
+8. Package into `dist.tar.gz`
+
+`pack.py --serve` generates config then runs `mkdocs serve` with auto-nav (used by `npm run dev`).
 
 Temporary build configs (`mkdocs-build.yml`, `mkdocs-headless-build.yml`) are cleaned up on exit.
 
@@ -42,14 +46,18 @@ Temporary build configs (`mkdocs-build.yml`, `mkdocs-headless-build.yml`) are cl
 
 ```
 docs/              → Markdown source files with YAML frontmatter
+data/showcase.yml  → Showcase landing page content (CMS-editable)
 theme/main.html    → Jinja2 page template (branded, dark mode toggle)
 theme/style.css    → Pre-compiled Tailwind CSS (edit Tailwind source to regenerate)
+showcase.html      → Jinja2 template for showcase (rendered from data/showcase.yml)
+showcase.css       → Showcase page styles (copied to dist/ at build time)
 scripts/pack.py    → Primary build script (cross-platform Python)
 scripts/pack.sh    → Bash build script (Linux/CI alternative)
 run.js             → Node wrapper: auto-detects python, invokes pack.py
-showcase.html      → Product landing page, becomes dist/index.html
 marketplace.json   → Knowledge base manifest (name, slug, icon, tags)
-mkdocs.yml         → MkDocs config: nav structure, theme, docs/site dirs
+mkdocs.yml         → MkDocs config: theme, docs/site dirs (nav is auto-generated)
+admin/index.html   → Sveltia CMS entry point
+admin/config.yml   → Sveltia CMS collections and backend config
 ```
 
 ## Documentation Conventions
@@ -63,9 +71,18 @@ section: Optional Section Name
 ---
 ```
 
-- Navigation order is defined in `mkdocs.yml` `nav:` section
-- `order` and `section` in frontmatter feed into `dist/marketplace.json` pages manifest
+- Navigation is **auto-generated** from frontmatter at build time — no manual `nav:` editing
+- Pages are sorted by `order`; pages with `section` are grouped under that section heading
 - Wiki pages placed in `docs/wiki/` are auto-discovered and appended as a "Wiki" nav section
+- `order` and `section` in frontmatter also feed into `dist/marketplace.json` pages manifest
+
+## CMS (Sveltia CMS)
+
+- Admin panel at `/admin/` — loads Sveltia CMS from CDN
+- Backend: GitHub (configure `backend.repo` in `admin/config.yml`)
+- Collections: docs (folder), showcase (file), marketplace metadata (file)
+- Showcase content lives in `data/showcase.yml` — rendered via Jinja2 template at build time
+- CMS commits trigger CI build; no separate build step needed
 
 ## MkDocs Theme
 

@@ -32,7 +32,7 @@ Tells the Knowledge Base how to catalogue your docs.
 | `tags` | No | Array of filter labels |
 | `entryPoint` | Yes | Always `"index.html"` |
 
-The build script automatically adds a `pages` array to `dist/marketplace.json` at build time — you never edit it by hand. Each doc page is read from `mkdocs.yml` nav order and the `title` / `order` frontmatter in each Markdown file. The knowledge base uses this to generate static routes without crawling the filesystem.
+The build script automatically adds a `pages` array to `dist/marketplace.json` at build time — you never edit it by hand. Each doc page is discovered from the `docs/` folder and its `title` / `order` / `section` frontmatter. The knowledge base uses this to generate static routes without crawling the filesystem.
 
 To control the order of a page, set `order` in its frontmatter:
 
@@ -43,18 +43,21 @@ order: 4
 ---
 ```
 
-To place a page under a sidebar section, add it to a section group in `mkdocs.yml`:
+To place a page under a sidebar section, add `section`:
 
 ```yaml
-nav:
-  - Overview: index.md
-  - Reference:
-    - API: reference/api.md
+---
+title: API Reference
+order: 5
+section: Reference
+---
 ```
+
+Navigation is **auto-generated** from frontmatter at build time — no manual `nav:` editing required.
 
 ## `mkdocs.yml`
 
-Controls the site name and sidebar navigation.
+Controls the site name and theme settings. Navigation is generated automatically.
 
 ```yaml
 site_name: My Team Docs          # shown in the top nav bar
@@ -66,29 +69,14 @@ theme:
   name: null
   custom_dir: theme              # leave as-is
 
-nav:
-  - Overview: index.md           # sidebar order = list order
-  - Getting Started: getting-started.md
-  - Reference: reference.md
+# nav is auto-generated from frontmatter (title, order, section) by pack.py
 ```
 
-To add a page: create the `.md` file in `docs/`, then add it to `nav:`.
+## Showcase landing page
 
-To group pages into sections:
+The landing page at `dist/index.html` is rendered from `data/showcase.yml` through a Jinja2 template (`showcase.html`). Edit the YAML file to change headings, feature cards, steps, and CTA buttons — or use the CMS at `/admin/` for a visual editor.
 
-```yaml
-nav:
-  - Overview: index.md
-  - User Guide:
-    - Getting Started: guide/getting-started.md
-    - Configuration: guide/configuration.md
-  - Reference:
-    - API: reference/api.md
-```
-
-## `showcase.html`
-
-The landing page at `dist/index.html`. Edit it to describe your product or service. Styles are shared with the docs bundle — design tokens are at the top of `theme/style.css`. You do not need to touch any CSS files.
+Styles live in `showcase.css`. Design tokens are at the top of the file.
 
 > **Full user guide:** For VS Code setup and the knowledge base registration process, see the complete guide in the knowledge base documentation.
 

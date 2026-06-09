@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Content Manager</title>
+</head>
+<body>
+  <script src="https://unpkg.com/decap-cms@^3.0.0/dist/decap-cms.js"></script>
+  <script>
+    // ── Live preview for the showcase page ──────────────────────────────────
+    CMS.registerPreviewStyle('/showcase.css');
+
+    var ShowcasePreview = createClass({
+      render: function () {
+        var content = this.props.entry.getIn(['data', 'content']) || '';
+        return h('div', { dangerouslySetInnerHTML: { __html: content } });
+      }
+    });
+
+    CMS.registerPreviewTemplate('showcase', ShowcasePreview);
+  </script>
+</body>
+</html>

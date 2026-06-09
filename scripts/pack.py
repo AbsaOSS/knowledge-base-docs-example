@@ -18,8 +18,9 @@
 """pack.py — build the docs site and package the release artifact.
 
 Usage:
-  python scripts/pack.py            # standalone
-  python scripts/pack.py --headless # headless (no top nav)
+  python scripts/pack.py            # standalone build
+  python scripts/pack.py --headless # headless build (no top nav)
+  python scripts/pack.py --serve    # generate config + live-reload dev server
 
 Output: dist.tar.gz  (contains dist/ + marketplace.json)
 
@@ -76,11 +77,55 @@ def parse_frontmatter(md_path: str) -> dict:
     return meta
 
 
+# ── Auto-generate nav from frontmatter ───────────────────────────────────────
+def auto_generate_nav(docs_dir="docs"):
+    """Scan docs/ for .md files, read frontmatter, build nav sorted by order."""
+    docs_path = Path(docs_dir)
+    pages = []
+
+    for md_file in docs_path.rglob("*.md"):
+        rel = md_file.relative_to(docs_path).as_posix()
+        if rel.startswith("wiki/"):
+            continue
+        fm = parse_frontmatter(str(md_file))
+        pages.append({
+            "file": rel,
+            "title": fm.get("title", md_file.stem.replace("-", " ").title()),
+            "order": fm.get("order", 999),
+            "section": fm.get("section"),
+        })
+
+    pages.sort(key=lambda p: p["order"])
+
+    top_level = []
+    sections = {}
+    section_min_order = {}
+
+    for page in pages:
+        entry = {page["title"]: page["file"]}
+        sect = page["section"]
+        if sect:
+            sections.setdefault(sect, []).append(entry)
+            section_min_order[sect] = min(section_min_order.get(sect, 999), page["order"])
+        else:
+            top_level.append(entry)
+
+    nav = list(top_level)
+
+    for sect_name in sorted(sections, key=lambda s: section_min_order[s]):
+        nav.append({sect_name: sections[sect_name]})
+
+    return nav
+
+
 # ── Generate build configs ────────────────────────────────────────────────────
 def generate_build_configs():
-    import yaml  # available after pip install
+    import yaml
 
     cfg = yaml.safe_load(Path("mkdocs.yml").read_text(encoding="utf-8"))
+
+    nav = auto_generate_nav(cfg.get("docs_dir", "docs"))
+    print(f"  Auto-generated nav with {sum(len(v) if isinstance(v, dict) and isinstance(list(v.values())[0], list) else 1 for v in nav)} page(s)")
 
     wiki_pages = sorted(Path("docs/wiki").glob("*.md")) if Path("docs/wiki").exists() else []
     if wiki_pages:
@@ -88,8 +133,10 @@ def generate_build_configs():
             {p.stem.replace("-", " ").replace("_", " "): f"wiki/{p.name}"}
             for p in wiki_pages
         ]
-        cfg.setdefault("nav", []).append({"Wiki": wiki_nav})
+        nav.append({"Wiki": wiki_nav})
         print(f"  Added {len(wiki_pages)} wiki page(s) to nav")
+
+    cfg["nav"] = nav
 
     Path("mkdocs-build.yml").write_text(
         yaml.dump(cfg, default_flow_style=False, allow_unicode=True), encoding="utf-8"
@@ -100,6 +147,55 @@ def generate_build_configs():
     )
 
 
+# ── HTML page wrapper for showcase content ───────────────────────────────────
+SHOWCASE_WRAPPER = """\
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Showcase</title>
+  <link rel="stylesheet" href="docs/style.css" />
+  <link rel="stylesheet" href="showcase.css" />
+</head>
+<body>
+{content}
+</body>
+</html>"""
+
+
+# ── Render showcase from data ────────────────────────────────────────────────
+def render_showcase(headless=False):
+    import yaml
+
+    data_path = Path("data/showcase.yml")
+    if not data_path.exists():
+        print("  ⚠ data/showcase.yml missing — skipping showcase render")
+        return
+
+    data = yaml.safe_load(data_path.read_text(encoding="utf-8"))
+    content = data.get("content", "")
+
+    if not content:
+        print("  ⚠ data/showcase.yml has no content — skipping showcase render")
+        return
+
+    if headless:
+        content = re.sub(
+            r"<!-- ── Navigation ── -->\s*<nav[^>]*>.*?</nav>\s*<!-- ── /Navigation ── -->",
+            "", content, flags=re.DOTALL
+        )
+
+    html = SHOWCASE_WRAPPER.format(content=content)
+    Path("dist/index.html").write_text(html, encoding="utf-8")
+
+    if Path("showcase.css").exists():
+        shutil.copy2("showcase.css", "dist/showcase.css")
+
+    if Path("admin").is_dir():
+        shutil.copytree("admin", "dist/admin", dirs_exist_ok=True)
+
+
 # ── Generate marketplace.json ─────────────────────────────────────────────────
 def generate_marketplace_json():
     import yaml
@@ -108,7 +204,7 @@ def generate_marketplace_json():
     nav = cfg.get("nav", [])
 
     pages = []
-    order_counter = [1]  # list so nested fn can mutate it
+    order_counter = [1]
 
     def add_entries(items, section=None):
         for item in items:
@@ -145,9 +241,12 @@ def generate_marketplace_json():
 # ── Main ──────────────────────────────────────────────────────────────────────
 def main():
     headless = False
+    serve = False
     for arg in sys.argv[1:]:
         if arg == "--headless":
             headless = True
+        elif arg == "--serve":
+            serve = True
         else:
             print(f"Unknown argument: {arg}")
             sys.exit(1)
@@ -155,6 +254,13 @@ def main():
     if os.environ.get("SKIP_PIP_INSTALL", "0") != "1":
         print("▶ Installing Python dependencies...")
         run(sys.executable, "-m", "pip", "install", "-r", "requirements.txt", "-q", "--break-system-packages")
+
+    if serve:
+        print("▶ Generating build config for dev server...")
+        generate_build_configs()
+        print("▶ Starting dev server (mkdocs serve)...")
+        run(sys.executable, "-m", "mkdocs", "serve", "-f", "mkdocs-build.yml")
+        return
 
     print("▶ Cleaning dist/...")
     shutil.rmtree("dist", ignore_errors=True)
@@ -170,12 +276,8 @@ def main():
             print("❌ dist/docs/index.html missing — build failed")
             sys.exit(1)
 
-        print("▶ Copying showcase (without nav) as entry point...")
-        html = Path("showcase.html").read_text(encoding="utf-8")
-        html = re.sub(
-            r"<!-- ── Navigation ── -->\s*<nav[^>]*>.*?</nav>", "", html, flags=re.DOTALL
-        )
-        Path("dist/index.html").write_text(html, encoding="utf-8")
+        print("▶ Rendering showcase (headless)...")
+        render_showcase(headless=True)
 
         print("▶ Generating dist/marketplace.json with pages manifest...")
         generate_marketplace_json()
@@ -198,8 +300,8 @@ def main():
             print("❌ dist/docs/index.html missing — build failed")
             sys.exit(1)
 
-        print("▶ Copying showcase as entry point...")
-        shutil.copy2("showcase.html", "dist/index.html")
+        print("▶ Rendering showcase...")
+        render_showcase(headless=False)
 
         print("▶ Generating dist/marketplace.json with pages manifest...")
         generate_marketplace_json()

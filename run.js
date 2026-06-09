@@ -56,10 +56,15 @@ if (args.includes("--preview")) {
     env,
   });
 } else if (args.includes("--dev")) {
-  execSync(
-    `${py} -m pip install -r requirements.txt -q --break-system-packages && ${py} -m mkdocs serve`,
-    { cwd: ROOT, stdio: "inherit", shell: true, env }
-  );
+  try {
+    execFileSync(py, ["scripts/pack.py", "--serve"], {
+      cwd: ROOT,
+      stdio: "inherit",
+      env,
+    });
+  } catch (e) {
+    process.exit(e.status || 1);
+  }
 } else {
   build(args);
 }

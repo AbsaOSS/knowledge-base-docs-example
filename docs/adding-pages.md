@@ -7,7 +7,7 @@ order: 3
 
 ## Adding a Markdown page
 
-**Step 1** — Create a `.md` file in the `docs/` folder:
+**Step 1** — Create a `.md` file in the `docs/` folder with frontmatter:
 
 ```
 docs/
@@ -16,16 +16,20 @@ docs/
 └── my-new-page.md   ← new file
 ```
 
-**Step 2** — Add it to the `nav:` section in `mkdocs.yml`:
-
 ```yaml
-nav:
-  - Overview: index.md
-  - Customising: customising.md
-  - My New Page: my-new-page.md   # ← add this line
+---
+title: My New Page
+order: 4
+---
+
+# My New Page
+
+Your content here.
 ```
 
-**Step 3** — Run `mkdocs serve` to preview the change.
+**Step 2** — Run `npm run dev` to preview. Navigation is auto-generated from frontmatter — no config editing needed.
+
+You can also create pages through the CMS at `/admin/`.
 
 ## Adding a standalone HTML page
 

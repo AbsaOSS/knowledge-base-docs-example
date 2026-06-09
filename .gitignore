@@ -27,6 +27,9 @@ docs/wiki/
 mkdocs-build.yml
 mkdocs-headless-build.yml
 
+# Packaged artifact (rebuilt on release)
+dist.tar.gz
+
 # Environment variables
 .env
 .env.local

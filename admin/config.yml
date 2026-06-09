@@ -1,0 +1,69 @@
+# Decap CMS configuration.
+# Docs: https://decapcms.org/docs/
+#
+# To use: update backend.repo to your GitHub org/repo, then visit /admin/ on
+# the deployed site. Authenticate with GitHub and start editing.
+
+backend:
+  name: github
+  repo: AbsaOSS/knowledge-base-docs-example
+  branch: master
+
+# local_backend: true  # uncomment for local dev (run: npx decap-server)
+
+media_folder: docs/assets/images
+public_folder: /docs/assets/images
+
+# ── Documentation pages ──────────────────────────────────────────────────────
+# Folder collection: editors can create, edit, and delete pages in docs/.
+# Navigation order is auto-generated from frontmatter at build time.
+
+collections:
+  - name: docs
+    label: Documentation
+    folder: docs
+    format: yaml-frontmatter
+    create: true
+    slug: "{{slug}}"
+    fields:
+      - { name: title, label: Title, widget: string }
+      - { name: order, label: Nav Order, widget: number, value_type: int, min: 1 }
+      - { name: section, label: Nav Section, widget: string, required: false,
+          hint: "Leave empty for top-level nav. Set a name to group under a sidebar section." }
+      - { name: body, label: Content, widget: markdown }
+
+  # ── Showcase landing page ────────────────────────────────────────────────────
+  # Raw HTML editing with live preview in the CMS.
+  # Content is wrapped in a full HTML page by pack.py at build time.
+
+  - name: showcase
+    label: Showcase Page
+    files:
+      - name: showcase
+        label: Showcase HTML
+        file: data/showcase.yml
+        fields:
+          - name: content
+            label: HTML Content
+            widget: code
+            default_language: html
+            allow_language_selection: false
+            output_code_only: true
+
+  # ── Marketplace metadata ─────────────────────────────────────────────────────
+
+  - name: settings
+    label: Settings
+    files:
+      - name: marketplace
+        label: Marketplace Metadata
+        file: marketplace.json
+        fields:
+          - { name: marketplaceVersion, label: Version, widget: hidden, default: "1" }
+          - { name: name, label: Display Name, widget: string }
+          - { name: slug, label: Slug, widget: string,
+              hint: "Lowercase letters, numbers, hyphens. Becomes the URL path." }
+          - { name: description, label: Description, widget: text }
+          - { name: icon, label: Icon, widget: string }
+          - { name: tags, label: Tags, widget: list, field: { name: tag, widget: string } }
+          - { name: entryPoint, label: Entry Point, widget: hidden, default: "index.html" }

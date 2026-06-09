@@ -14,13 +14,4 @@
 # limitations under the License.
 #
 
-site_name: Knowledge Base Docs Example
-site_description: MkDocs template for publishing documentation to the Knowledge Base — clone, write Markdown, publish.
-docs_dir: docs
-site_dir: dist/docs
-
-theme:
-  name: null
-  custom_dir: theme
-
-# nav is auto-generated from frontmatter (title, order, section) by pack.py
+* @oto-macenauer-absa @lsulak
