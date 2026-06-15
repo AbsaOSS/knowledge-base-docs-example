@@ -8,11 +8,21 @@ backend:
   name: github
   repo: AbsaOSS/knowledge-base-docs-example
   branch: master
+  # OAuth handled by a Cloudflare Worker (sveltia-cms-auth). base_url overrides
+  # Decap's default Netlify OAuth host; auth_endpoint matches the Worker's /auth
+  # route. The Worker holds the GitHub OAuth client secret.
+  base_url: https://sveltia-cms-auth.kb-cms.workers.dev
+  auth_endpoint: auth
 
 # local_backend: true  # uncomment for local dev (run: npx decap-server)
 
+# media_folder = where uploads are committed in the repo.
+# public_folder = the path written into Markdown. Keep it RELATIVE (no leading
+# slash) so images resolve regardless of where the site is served — e.g. a
+# GitHub *project* page under /<repo>/ where an absolute "/docs/..." would 404.
+# MkDocs rewrites this relative path correctly for each page's output URL.
 media_folder: docs/assets/images
-public_folder: /docs/assets/images
+public_folder: assets/images
 
 # ── Documentation pages ──────────────────────────────────────────────────────
 # Folder collection: editors can create, edit, and delete pages in docs/.

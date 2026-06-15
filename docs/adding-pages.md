@@ -75,6 +75,39 @@ From the showcase HTML, link into the docs:
 <a href="docs/index.html">Read the docs</a>
 ```
 
+## Embedding SharePoint videos
+
+MkDocs renders Markdown, not MDX — but reusable components are available through
+[mkdocs-macros](https://mkdocs-macros-plugin.readthedocs.io/). Call the
+`sharepoint_video` macro from any `.md` page to drop in a responsive video:
+
+```markdown
+{% raw %}{{ sharepoint_video('https://absa.sharepoint.com/.../video.mp4', title='Onboarding demo') }}{% endraw %}
+```
+
+This renders a responsive 16:9 iframe that scales with the page. Arguments:
+
+| Argument | Required | Notes |
+|---|---|---|
+| `url` | Yes | SharePoint share/embed URL. In SharePoint use **Share → Embed** and copy the `src`; a plain share link usually works too (append `&embed=true` if the player does not load). |
+| `title` | No | Accessible label for screen readers. |
+| `ratio` | No | Aspect-ratio padding. `"56.25%"` = 16:9 (default), `"75%"` = 4:3. |
+
+Macros are defined in `main.py` at the repo root — add your own there to build
+more reusable components.
+
+## Adding images
+
+Upload images through the CMS at `/admin/`, or drop files into
+`docs/assets/images/` and reference them with a path relative to your page:
+
+```markdown
+![Architecture diagram](assets/images/diagram.png)
+```
+
+MkDocs rewrites the path to the correct URL at build time, so it works both
+locally and when the site is served under a subpath.
+
 ## Cross-linking between Markdown pages
 
 Use relative paths without the `.md` extension in links:

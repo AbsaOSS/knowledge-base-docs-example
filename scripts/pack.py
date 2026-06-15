@@ -242,11 +242,14 @@ def generate_marketplace_json():
 def main():
     headless = False
     serve = False
+    no_package = False
     for arg in sys.argv[1:]:
         if arg == "--headless":
             headless = True
         elif arg == "--serve":
             serve = True
+        elif arg == "--no-package":
+            no_package = True
         else:
             print(f"Unknown argument: {arg}")
             sys.exit(1)
@@ -282,6 +285,10 @@ def main():
         print("▶ Generating dist/marketplace.json with pages manifest...")
         generate_marketplace_json()
 
+        if no_package:
+            print("✅ dist/ rebuilt (headless, packaging skipped)")
+            return
+
         print("▶ Packaging (headless)...")
         with tarfile.open("dist.tar.gz", "w:gz") as tar:
             tar.add("dist")
@@ -305,6 +312,10 @@ def main():
 
         print("▶ Generating dist/marketplace.json with pages manifest...")
         generate_marketplace_json()
+
+        if no_package:
+            print("✅ dist/ rebuilt (packaging skipped)")
+            return
 
         print("▶ Packaging...")
         with tarfile.open("dist.tar.gz", "w:gz") as tar:

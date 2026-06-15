@@ -24,3 +24,8 @@ theme:
   custom_dir: theme
 
 # nav is auto-generated from frontmatter (title, order, section) by pack.py
+
+plugins:
+  - search
+  - macros:        # reusable components for docs pages — see main.py
+      module_name: main

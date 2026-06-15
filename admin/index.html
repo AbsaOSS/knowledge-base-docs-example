@@ -8,9 +8,37 @@
 <body>
   <script src="https://unpkg.com/decap-cms@^3.0.0/dist/decap-cms.js"></script>
   <script>
-    // ── Live preview for the showcase page ──────────────────────────────────
+    // ── Preview styles ───────────────────────────────────────────────────────
+    // Inject the built site CSS into the CMS preview iframe so the docs preview
+    // matches the published theme. style.css is the theme's pre-built Tailwind
+    // (incl. .prose typography); served at /docs/style.css on the built site.
+    CMS.registerPreviewStyle('/docs/style.css');
     CMS.registerPreviewStyle('/showcase.css');
 
+    // ── Live preview for documentation pages ────────────────────────────────
+    // The theme styles are scoped to "#docs-root" and ".prose" (see theme/
+    // main.html), so mirror that wrapper here or the markdown renders unstyled.
+    var DocsPreview = createClass({
+      render: function () {
+        return h(
+          'div',
+          { id: 'docs-root' },
+          h(
+            'main',
+            { id: 'content' },
+            h(
+              'article',
+              { className: 'prose prose-gray max-w-none', style: { padding: '1.5rem' } },
+              this.props.widgetFor('body')
+            )
+          )
+        );
+      }
+    });
+
+    CMS.registerPreviewTemplate('docs', DocsPreview);
+
+    // ── Live preview for the showcase page ──────────────────────────────────
     var ShowcasePreview = createClass({
       render: function () {
         var content = this.props.entry.getIn(['data', 'content']) || '';
