@@ -11,9 +11,14 @@
     // ── Preview styles ───────────────────────────────────────────────────────
     // Inject the built site CSS into the CMS preview iframe so the docs preview
     // matches the published theme. style.css is the theme's pre-built Tailwind
-    // (incl. .prose typography); served at /docs/style.css on the built site.
-    CMS.registerPreviewStyle('/docs/style.css');
-    CMS.registerPreviewStyle('/showcase.css');
+    // (incl. .prose typography); served at <base>/docs/style.css on the site.
+    //
+    // Derive the base path from the admin URL at runtime — an absolute "/docs/.."
+    // 404s on a GitHub *project* page served under /<repo>/, and a bare relative
+    // path is unreliable inside the preview iframe. e.g. /<repo>/admin/ → /<repo>/
+    var SITE_BASE = location.pathname.replace(/admin\/.*$/, '');
+    CMS.registerPreviewStyle(SITE_BASE + 'docs/style.css');
+    CMS.registerPreviewStyle(SITE_BASE + 'showcase.css');
 
     // ── Live preview for documentation pages ────────────────────────────────
     // The theme styles are scoped to "#docs-root" and ".prose" (see theme/
