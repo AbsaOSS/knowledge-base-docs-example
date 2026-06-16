@@ -2,7 +2,6 @@
 title: Customising
 order: 2
 ---
-
 # Customising the Template
 
 Two files control everything a team needs to customise. The rest — theme, build script, CSS, CI pipeline — works out of the box.
@@ -23,14 +22,14 @@ Tells the Knowledge Base how to catalogue your docs.
 }
 ```
 
-| Field | Required | Notes |
-|---|---|---|
-| `slug` | Yes | Lowercase letters, numbers, hyphens — becomes the URL path |
-| `name` | Yes | Display name in the knowledge base catalogue |
-| `description` | Yes | One-line summary on the catalogue card |
-| `icon` | No | Icon name from the knowledge base icon set |
-| `tags` | No | Array of filter labels |
-| `entryPoint` | Yes | Always `"index.html"` |
+| Field         | Required | Notes                                                      |
+| ------------- | -------- | ---------------------------------------------------------- |
+| `slug`        | Yes      | Lowercase letters, numbers, hyphens — becomes the URL path |
+| `name`        | Yes      | Display name in the knowledge base catalogue               |
+| `description` | Yes      | One-line summary on the catalogue card                     |
+| `icon`        | No       | Icon name from the knowledge base icon set                 |
+| `tags`        | No       | Array of filter labels                                     |
+| `entryPoint`  | Yes      | Always `"index.html"`                                      |
 
 The build script automatically adds a `pages` array to `dist/marketplace.json` at build time — you never edit it by hand. Each doc page is discovered from the `docs/` folder and its `title` / `order` / `section` frontmatter. The knowledge base uses this to generate static routes without crawling the filesystem.
 
@@ -78,6 +77,6 @@ The landing page at `dist/index.html` is rendered from `data/showcase.yml` throu
 
 Styles live in `showcase.css`. Design tokens are at the top of the file.
 
-> **Full user guide:** For VS Code setup and the knowledge base registration process, see the complete guide in the knowledge base documentation.
+> **Full user guide:** For the VS Code setup and the knowledge base registration process, see the complete guide in the knowledge base documentation.
 
 Next: [Adding Pages](adding-pages.md)
