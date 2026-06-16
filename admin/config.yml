@@ -4,6 +4,10 @@
 # To use: update backend.repo to your GitHub org/repo, then visit /admin/ on
 # the deployed site. Authenticate with GitHub and start editing.
 
+# Logo shown on the login screen. Relative path resolves against /admin/, so it
+# is base-path-safe on a GitHub project page. File lives at admin/logo.svg.
+logo_url: logo.svg
+
 backend:
   name: github
   repo: AbsaOSS/knowledge-base-docs-example

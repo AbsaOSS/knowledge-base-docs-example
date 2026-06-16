@@ -4,9 +4,36 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Content Manager</title>
+  <style>
+    /* ── Login-screen rebrand ──────────────────────────────────────────────
+       Decap uses hashed (Emotion) class names, so these selectors are
+       best-effort: if a Decap upgrade changes the markup, re-inspect the
+       login page with devtools and update them. Logo itself is set via
+       `logo_url` in config.yml. */
+    [class*="LoginPage"],
+    [class*="Authentication"] {
+      background: #f7f7f8 !important;
+    }
+    /* "Login with GitHub" button */
+    [class*="LoginPage"] button,
+    [class*="Authentication"] button,
+    button[class*="Login"] {
+      background-color: #E2231A !important;   /* brand red */
+      border-radius: 8px !important;
+    }
+    /* Login logo sizing */
+    [class*="LoginPage"] img,
+    [class*="Authentication"] img {
+      width: 96px !important;
+      height: auto !important;
+    }
+  </style>
 </head>
 <body>
-  <script src="https://unpkg.com/decap-cms@^3.0.0/dist/decap-cms.js"></script>
+  <!-- Vendored Decap CMS (pinned 3.14.1) — self-hosted, no CDN dependency.
+       Refresh: curl -sL -o admin/decap-cms.js \
+         https://unpkg.com/decap-cms@<version>/dist/decap-cms.js -->
+  <script src="./decap-cms.js"></script>
   <script>
     // ── Preview styles ───────────────────────────────────────────────────────
     // Inject the built site CSS into the CMS preview iframe so the docs preview
