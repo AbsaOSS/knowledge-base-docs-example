@@ -1,0 +1,98 @@
+name: Release
+
+# Publishes a headless dist.tar.gz to GitHub Releases so the docs-marketplace
+# can download and integrate this app at build time.
+#
+# Trigger: push a semver tag  →  git tag v1.2.3 && git push --tags
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag (e.g. v1.0.0)'
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build headless + publish release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Checkout wiki
+        uses: actions/checkout@v4
+        continue-on-error: true
+        with:
+          repository: ${{ github.repository }}.wiki
+          path: docs/wiki
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      # ── Validate against marketplace contract first ─────────────────────────
+      - name: Validate marketplace.json
+        run: |
+          python3 - <<'EOF'
+          import json, sys
+          m = json.load(open('marketplace.json'))
+          required = ['marketplaceVersion', 'name', 'slug', 'description', 'entryPoint']
+          missing = [k for k in required if not m.get(k)]
+          if missing:
+              print('Missing fields:', missing, file=sys.stderr)
+              sys.exit(1)
+          print('✓ marketplace.json valid — slug:', m['slug'])
+          EOF
+
+      # ── Headless build ──────────────────────────────────────────────────────
+      - name: Build (headless)
+        run: SKIP_PIP_INSTALL=1 bash pack.sh --headless
+
+      - name: Verify headless output
+        run: |
+          if [ ! -f dist/index.html ]; then
+            echo "::error::dist/index.html missing after headless build"
+            exit 1
+          fi
+          if [ ! -f dist/docs/index.html ]; then
+            echo "::error::dist/docs/index.html missing after headless build"
+            exit 1
+          fi
+          if ! grep -q 'data-mp-headless="true"' dist/docs/index.html; then
+            echo "::error::data-mp-headless=\"true\" not found in dist/docs/index.html"
+            exit 1
+          fi
+          echo "✓ Headless build verified"
+
+      # ── Package artifact ────────────────────────────────────────────────────
+      - name: Package dist + manifest
+        run: |
+          tar -czf dist.tar.gz dist/ marketplace.json
+          echo "Archive size: $(du -sh dist.tar.gz | cut -f1)"
+
+      # ── Create GitHub Release ───────────────────────────────────────────────
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.event.inputs.tag || github.ref_name }}
+          name: ${{ github.event.inputs.tag || github.ref_name }}
+          body: |
+            ## Knowledge Base User Guide — ${{ github.event.inputs.tag || github.ref_name }}
+
+            Headless static site built with [MkDocs](https://www.mkdocs.org/),
+            ready for [knowledge-base](https://github.com/AbsaOss/knowledge-base) integration.
+
+            ### What's included
+            - `dist.tar.gz` — headless HTML output + `marketplace.json` manifest
+
+            ### Integration
+            The docs-marketplace automatically picks up the latest release.
+            To pin a specific version, update `apps.json` in the marketplace repo.
+          files: dist.tar.gz
+          fail_on_unmatched_files: true
