@@ -29,12 +29,12 @@
 set -euo pipefail
 
 # ── Detect Python binary ─────────────────────────────────────────────────────
-if command -v $PYTHON &>/dev/null; then
-  PYTHON=$PYTHON
+if command -v python3 &>/dev/null; then
+  PYTHON=python3
 elif command -v python &>/dev/null; then
   PYTHON=python
 else
-  echo "❌ No $PYTHON or python found in PATH"
+  echo "❌ No python3 or python found in PATH"
   exit 1
 fi
 
@@ -46,21 +46,60 @@ _cleanup() {
 }
 trap _cleanup EXIT
 
-# ── Merge mkdocs.yml + any wiki pages into build-time configs ─────────────────
-# If docs/wiki/ was populated (e.g. by the CI workflow checking out the wiki),
-# its pages are appended as a "Wiki" nav section. The generated configs are used
-# for the actual mkdocs build so mkdocs.yml stays clean and uncommitted.
+# ── Merge mkdocs.yml into build-time configs ──────────────────────────────────
+# The generated configs are used for the actual mkdocs build so mkdocs.yml stays
+# clean and uncommitted.
 generate_build_configs() {
   $PYTHON - <<'PY'
-import yaml, pathlib
+import re, yaml, pathlib
+
+def parse_frontmatter(md_path):
+    text = pathlib.Path(md_path).read_text(encoding='utf-8')
+    m = re.match(r'^---\s*\n(.*?)\n---\s*\n', text, re.DOTALL)
+    meta = {}
+    if m:
+        for line in m.group(1).splitlines():
+            kv = line.split(':', 1)
+            if len(kv) == 2:
+                k, v = kv[0].strip(), kv[1].strip()
+                meta[k] = int(v) if v.isdigit() else v
+    return meta
+
+def auto_generate_nav(docs_dir='docs'):
+    docs_path = pathlib.Path(docs_dir)
+    pages = []
+    for md_file in docs_path.rglob('*.md'):
+        rel = md_file.relative_to(docs_path).as_posix()
+        fm = parse_frontmatter(str(md_file))
+        pages.append({
+            'file': rel,
+            'title': fm.get('title', md_file.stem.replace('-', ' ').title()),
+            'order': fm.get('order', 999),
+            'section': fm.get('section'),
+        })
+    pages.sort(key=lambda p: p['order'])
+
+    top_level = []
+    sections = {}
+    section_min_order = {}
+    for page in pages:
+        entry = {page['title']: page['file']}
+        sect = page['section']
+        if sect:
+            sections.setdefault(sect, []).append(entry)
+            section_min_order[sect] = min(section_min_order.get(sect, 999), page['order'])
+        else:
+            top_level.append(entry)
+
+    nav = list(top_level)
+    for sect_name in sorted(sections, key=lambda s: section_min_order[s]):
+        nav.append({sect_name: sections[sect_name]})
+    return nav
 
 cfg = yaml.safe_load(pathlib.Path('mkdocs.yml').read_text())
-
-wiki_pages = sorted(pathlib.Path('docs/wiki').glob('*.md')) if pathlib.Path('docs/wiki').exists() else []
-if wiki_pages:
-    wiki_nav = [{p.stem.replace('-', ' ').replace('_', ' '): f'wiki/{p.name}'} for p in wiki_pages]
-    cfg.setdefault('nav', []).append({'Wiki': wiki_nav})
-    print(f'  Added {len(wiki_pages)} wiki page(s) to nav')
+nav = auto_generate_nav(cfg.get('docs_dir', 'docs'))
+cfg['nav'] = nav
+print(f'  Auto-generated nav with {len(nav)} top-level entr(y/ies)')
 
 pathlib.Path('mkdocs-build.yml').write_text(yaml.dump(cfg, default_flow_style=False, allow_unicode=True))
 PY

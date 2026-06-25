@@ -26,13 +26,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Checkout wiki
-        uses: actions/checkout@v4
-        continue-on-error: true
-        with:
-          repository: ${{ github.repository }}.wiki
-          path: docs/wiki
-
       - name: Install dependencies
         run: pip install -r requirements.txt
 
@@ -52,7 +45,7 @@ jobs:
 
       # ── Headless build ──────────────────────────────────────────────────────
       - name: Build (headless)
-        run: SKIP_PIP_INSTALL=1 bash pack.sh --headless
+        run: SKIP_PIP_INSTALL=1 bash scripts/pack.sh --headless
 
       - name: Verify headless output
         run: |

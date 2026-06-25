@@ -85,8 +85,6 @@ def auto_generate_nav(docs_dir="docs"):
 
     for md_file in docs_path.rglob("*.md"):
         rel = md_file.relative_to(docs_path).as_posix()
-        if rel.startswith("wiki/"):
-            continue
         fm = parse_frontmatter(str(md_file))
         pages.append({
             "file": rel,
@@ -126,15 +124,6 @@ def generate_build_configs():
 
     nav = auto_generate_nav(cfg.get("docs_dir", "docs"))
     print(f"  Auto-generated nav with {sum(len(v) if isinstance(v, dict) and isinstance(list(v.values())[0], list) else 1 for v in nav)} page(s)")
-
-    wiki_pages = sorted(Path("docs/wiki").glob("*.md")) if Path("docs/wiki").exists() else []
-    if wiki_pages:
-        wiki_nav = [
-            {p.stem.replace("-", " ").replace("_", " "): f"wiki/{p.name}"}
-            for p in wiki_pages
-        ]
-        nav.append({"Wiki": wiki_nav})
-        print(f"  Added {len(wiki_pages)} wiki page(s) to nav")
 
     cfg["nav"] = nav
 
