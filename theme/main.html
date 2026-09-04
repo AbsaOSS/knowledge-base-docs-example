@@ -14,7 +14,7 @@
   limitations under the License.
 -->
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en"{% if config.extra.headless %} data-kb-headless="true"{% endif %}>
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -22,8 +22,10 @@
   <link rel="stylesheet" href="{{ "style.css" | url }}">
 </head>
 <body>
-<div id="docs-root"{% if config.extra.headless %} data-mp-headless="true"{% endif %}>
+<div id="docs-root">
+  {%- if not config.extra.headless %}
   <script>if(localStorage.getItem('theme')==='dark'){document.getElementById('docs-root').classList.add('dark')}</script>
+  {%- endif %}
   {%- if not config.extra.headless -%}
   {%- if config.extra.showcase_url -%}
     {%- set _home_href = config.extra.showcase_url -%}

@@ -15,18 +15,26 @@
 # limitations under the License.
 #
 
-# pack.sh — build the docs site and package the release artifact.
+# pack.sh — build the docs site for the Knowledge Base (bash alternative to pack.py).
 #
 # Usage:
-#   bash scripts/pack.sh            # standalone
-#   bash scripts/pack.sh --headless # headless (no top nav)
+#   bash scripts/pack.sh            # standalone build → dist/
+#   bash scripts/pack.sh --headless # headless build → dist/ (what the release publishes)
+#   bash scripts/pack.sh --pack     # headless build + local kb-docs.tar.gz for inspection
 #
-# Output: dist.tar.gz  (contains dist/ + marketplace.json)
+# Every build refreshes apps[0].pages in kb-docs.json from docs/ frontmatter.
+# Packing and publishing is the job of AbsaOSS/knowledge-base/actions/publish-docs
+# (see .github/workflows/pack.yml); --pack mirrors its artifact layout so the
+# result can be inspected without cutting a release.
 #
 # Prerequisites: pip install -r requirements.txt
 #               Set SKIP_PIP_INSTALL=1 to bypass (e.g. managed environments where packages are pre-installed)
 
 set -euo pipefail
+
+MANIFEST=kb-docs.json
+ASSET_NAME=kb-docs.tar.gz
+HEADLESS_MARKER='data-kb-headless="true"'
 
 # ── Detect Python binary ─────────────────────────────────────────────────────
 if command -v python3 &>/dev/null; then
@@ -96,59 +104,30 @@ def auto_generate_nav(docs_dir='docs'):
         nav.append({sect_name: sections[sect_name]})
     return nav
 
-cfg = yaml.safe_load(pathlib.Path('mkdocs.yml').read_text())
+cfg = yaml.safe_load(pathlib.Path('mkdocs.yml').read_text(encoding='utf-8'))
 nav = auto_generate_nav(cfg.get('docs_dir', 'docs'))
 cfg['nav'] = nav
 print(f'  Auto-generated nav with {len(nav)} top-level entr(y/ies)')
 
-pathlib.Path('mkdocs-build.yml').write_text(yaml.dump(cfg, default_flow_style=False, allow_unicode=True))
+pathlib.Path('mkdocs-build.yml').write_text(yaml.dump(cfg, default_flow_style=False, allow_unicode=True), encoding='utf-8')
 PY
 
   # Headless variant inherits the merged base config and sets headless mode
   printf 'INHERIT: mkdocs-build.yml\n\nextra:\n  headless: true\n' > mkdocs-headless-build.yml
 }
 
-if [ "${SKIP_PIP_INSTALL:-0}" != "1" ]; then
-  echo "▶ Installing Python dependencies..."
-  $PYTHON -m pip install -r requirements.txt -q --break-system-packages
-fi
-
-HEADLESS=false
-for arg in "$@"; do
-  case "$arg" in
-    --headless) HEADLESS=true ;;
-    *) echo "Unknown argument: $arg"; exit 1 ;;
-  esac
-done
-
-echo "▶ Cleaning dist/..."
-rm -rf dist/
-
-echo "▶ Generating build configs..."
-generate_build_configs
-
-if [ "$HEADLESS" = true ]; then
-  echo "▶ Building docs (headless)..."
-  $PYTHON -m mkdocs build -f mkdocs-headless-build.yml
-
-  if [ ! -f dist/docs/index.html ]; then
-    echo "❌ dist/docs/index.html missing — build failed"
-    exit 1
-  fi
-
-  echo "▶ Copying showcase (without nav) as entry point..."
+# ── Pages manifest → kb-docs.json ─────────────────────────────────────────────
+# Writes the computed `pages` list into apps[0] of kb-docs.json, in place.
+# kb-docs.json is the file the publish action reads, so the pages live there
+# rather than in dist/. Only apps[0].pages is touched.
+update_manifest_pages() {
   $PYTHON - <<'PY'
-import re, pathlib
-html = pathlib.Path('showcase.html').read_text()
-html = re.sub(r'<!-- ── Navigation ── -->\s*<nav[^>]*>.*?</nav>', '', html, flags=re.DOTALL)
-pathlib.Path('dist/index.html').write_text(html)
-PY
-  echo "▶ Generating dist/marketplace.json with pages manifest..."
-  $PYTHON - <<'PY'
-import json, pathlib, re
+import json, pathlib, re, sys, yaml
+
+MANIFEST = 'kb-docs.json'
 
 def parse_frontmatter(md_path):
-    text = pathlib.Path(md_path).read_text()
+    text = pathlib.Path(md_path).read_text(encoding='utf-8')
     m = re.match(r'^---\s*\n(.*?)\n---\s*\n', text, re.DOTALL)
     meta = {}
     if m:
@@ -159,13 +138,19 @@ def parse_frontmatter(md_path):
                 meta[k] = int(v) if v.isdigit() else v
     return meta
 
-import yaml
-cfg = yaml.safe_load(pathlib.Path('mkdocs-build.yml').read_text())
+def output_path(md_rel):
+    rel = pathlib.Path(md_rel).with_suffix('').as_posix()
+    if rel == 'index':
+        return 'docs/index.html'
+    if rel.endswith('/index'):
+        rel = rel[:-len('/index')]
+    return f'docs/{rel}/index.html'
+
+cfg = yaml.safe_load(pathlib.Path('mkdocs-build.yml').read_text(encoding='utf-8'))
 nav = cfg.get('nav', [])
 
 pages = []
 order_counter = 1
-current_section = None
 
 def add_entries(items, section=None):
     global order_counter
@@ -174,12 +159,9 @@ def add_entries(items, section=None):
             for label, value in item.items():
                 if isinstance(value, str):  # leaf page
                     fm = parse_frontmatter(f'docs/{value}')
-                    # derive output path from source filename
-                    stem = pathlib.Path(value).stem
-                    out = 'docs/index.html' if stem == 'index' else f'docs/{stem}/index.html'
                     entry = {
                         'title': fm.get('title', label),
-                        'path': out,
+                        'path': output_path(value),
                         'order': fm.get('order', order_counter),
                     }
                     if section:
@@ -193,87 +175,107 @@ def add_entries(items, section=None):
 
 add_entries(nav)
 
-manifest = json.loads(pathlib.Path('marketplace.json').read_text())
-manifest['pages'] = pages
-pathlib.Path('dist/marketplace.json').write_text(json.dumps(manifest, indent=2))
-print(f'  {len(pages)} page(s) written to dist/marketplace.json')
+path = pathlib.Path(MANIFEST)
+if not path.exists():
+    sys.exit(f'❌ {MANIFEST} missing — see docs/publishing.md for its shape')
+manifest = json.loads(path.read_text(encoding='utf-8'))
+apps = manifest.get('apps')
+if manifest.get('kbVersion') != '1' or not isinstance(apps, list) or len(apps) != 1:
+    sys.exit(f'❌ {MANIFEST} must have "kbVersion": "1" and exactly one entry in "apps"')
+apps[0]['pages'] = pages
+path.write_text(json.dumps(manifest, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
+print(f'  {len(pages)} page(s) written to {MANIFEST} (apps[0].pages)')
 PY
+}
 
-  echo "▶ Packaging (headless)..."
-  tar -czf dist.tar.gz dist/ marketplace.json
+if [ "${SKIP_PIP_INSTALL:-0}" != "1" ]; then
+  echo "▶ Installing Python dependencies..."
+  $PYTHON -m pip install -r requirements.txt -q --break-system-packages
+fi
 
-  echo "✅ dist.tar.gz ready ($(du -sh dist.tar.gz | cut -f1)) [headless]"
-  echo "   dist/index.html      → showcase without nav (headless entry point)"
-  echo "   dist/docs/index.html → documentation"
+HEADLESS=false
+PACK=false
+for arg in "$@"; do
+  case "$arg" in
+    --headless) HEADLESS=true ;;
+    --pack) PACK=true; HEADLESS=true ;;   # only a headless build is a valid artifact
+    *) echo "Unknown argument: $arg"; exit 1 ;;
+  esac
+done
+
+echo "▶ Cleaning dist/..."
+rm -rf dist/
+
+echo "▶ Generating build configs..."
+generate_build_configs
+
+if [ "$HEADLESS" = true ]; then
+  echo "▶ Building docs (headless)..."
+  $PYTHON -m mkdocs build -f mkdocs-headless-build.yml
 else
   echo "▶ Building docs..."
   $PYTHON -m mkdocs build -f mkdocs-build.yml
+fi
 
-  if [ ! -f dist/docs/index.html ]; then
-    echo "❌ dist/docs/index.html missing — build failed"
+if [ ! -f dist/docs/index.html ]; then
+  echo "❌ dist/docs/index.html missing — build failed"
+  exit 1
+fi
+
+if [ "$HEADLESS" = true ]; then
+  echo "▶ Copying showcase (without nav) as entry point..."
+  $PYTHON - <<'PY'
+import re, pathlib
+html = pathlib.Path('showcase.html').read_text(encoding='utf-8')
+html = re.sub(r'<!-- ── Navigation ── -->\s*<nav[^>]*>.*?</nav>', '', html, flags=re.DOTALL)
+# The knowledge base verifies every HTML file carries the headless marker on <html>.
+html = re.sub(r'<html\b', '<html data-kb-headless="true"', html, count=1)
+pathlib.Path('dist/index.html').write_text(html, encoding='utf-8')
+PY
+else
+  echo "▶ Copying showcase as entry point..."
+  cp showcase.html dist/index.html
+fi
+[ -f showcase.css ] && cp showcase.css dist/showcase.css
+
+echo "▶ Updating $MANIFEST pages manifest..."
+update_manifest_pages
+
+if [ "$PACK" = true ]; then
+  echo "▶ Packing $ASSET_NAME (local preview of the publish action)..."
+  SLUG=$($PYTHON -c "import json; print(json.load(open('$MANIFEST', encoding='utf-8'))['apps'][0]['slug'])")
+
+  missing=$(grep -rL --include='*.html' "$HEADLESS_MARKER" dist || true)
+  if [ -n "$missing" ]; then
+    echo "❌ HTML without $HEADLESS_MARKER on <html>:"
+    echo "$missing" | sed 's/^/   • /'
     exit 1
   fi
 
-  echo "▶ Copying showcase as entry point..."
-  cp showcase.html dist/index.html
+  # Same layout and deterministic metadata as actions/publish-docs:
+  # kb-docs.json at the root, one directory per slug, fixed mtime, uid/gid 0.
+  STAGE=$(mktemp -d)
+  trap 'rm -rf "$STAGE"; _cleanup' EXIT
+  cp -r dist "$STAGE/$SLUG"
+  cp "$MANIFEST" "$STAGE/$MANIFEST"
+  rm -f "$ASSET_NAME"
+  tar --sort=name --mtime='2020-01-01 00:00:00Z' --owner=0 --group=0 --numeric-owner \
+      -czf "$ASSET_NAME" -C "$STAGE" "$MANIFEST" "$SLUG"
 
-  echo "▶ Generating dist/marketplace.json with pages manifest..."
-  $PYTHON - <<'PY'
-import json, pathlib, re, yaml
+  echo "✅ $ASSET_NAME ready ($(du -sh "$ASSET_NAME" | cut -f1))"
+  echo "   $MANIFEST   → manifest with generated pages"
+  echo "   $SLUG/index.html  → entry point"
+  exit 0
+fi
 
-def parse_frontmatter(md_path):
-    text = pathlib.Path(md_path).read_text()
-    m = re.match(r'^---\s*\n(.*?)\n---\s*\n', text, re.DOTALL)
-    meta = {}
-    if m:
-        for line in m.group(1).splitlines():
-            kv = line.split(':', 1)
-            if len(kv) == 2:
-                k, v = kv[0].strip(), kv[1].strip()
-                meta[k] = int(v) if v.isdigit() else v
-    return meta
-
-cfg = yaml.safe_load(pathlib.Path('mkdocs-build.yml').read_text())
-nav = cfg.get('nav', [])
-
-pages = []
-order_counter = 1
-
-def add_entries(items, section=None):
-    global order_counter
-    for item in items:
-        if isinstance(item, dict):
-            for label, value in item.items():
-                if isinstance(value, str):
-                    fm = parse_frontmatter(f'docs/{value}')
-                    stem = pathlib.Path(value).stem
-                    out = 'docs/index.html' if stem == 'index' else f'docs/{stem}/index.html'
-                    entry = {
-                        'title': fm.get('title', label),
-                        'path': out,
-                        'order': fm.get('order', order_counter),
-                    }
-                    if section:
-                        entry['section'] = section
-                    elif fm.get('section'):
-                        entry['section'] = fm['section']
-                    pages.append(entry)
-                    order_counter += 1
-                elif isinstance(value, list):
-                    add_entries(value, section=label)
-
-add_entries(nav)
-
-manifest = json.loads(pathlib.Path('marketplace.json').read_text())
-manifest['pages'] = pages
-pathlib.Path('dist/marketplace.json').write_text(json.dumps(manifest, indent=2))
-print(f'  {len(pages)} page(s) written to dist/marketplace.json')
-PY
-
-  echo "▶ Packaging..."
-  tar -czf dist.tar.gz dist/ marketplace.json
-
-  echo "✅ dist.tar.gz ready ($(du -sh dist.tar.gz | cut -f1))"
+if [ "$HEADLESS" = true ]; then
+  echo "✅ dist/ ready (headless)"
+  echo "   dist/index.html      → showcase without nav (headless entry point)"
+  echo "   dist/docs/index.html → documentation"
+  echo "   Publish: the release workflow hands dist/ + $MANIFEST to actions/publish-docs"
+  echo "   Inspect: bash scripts/pack.sh --pack → $ASSET_NAME"
+else
+  echo "✅ dist/ ready"
   echo "   dist/index.html      → product showcase (entry point)"
   echo "   dist/docs/index.html → documentation"
 fi

@@ -15,15 +15,18 @@ npm run build          # standalone build
 npm run build:headless # headless build (no top nav, for knowledge base embedding)
 ```
 
+Builds write to `dist/`. Nothing is packaged by default — the release workflow hands `dist/` + `kb-docs.json` to the reusable `AbsaOSS/knowledge-base/actions/publish-docs` action, which validates, packs `kb-docs.tar.gz` and attaches it to the GitHub Release.
+
 `run.js` auto-detects `python3` or `python` — works on Windows and Linux/Mac.
 
 Direct invocation (skipping npm):
 ```bash
 python scripts/pack.py
 python scripts/pack.py --headless
+python scripts/pack.py --pack      # headless + local kb-docs.tar.gz (same layout as the action)
 ```
 
-Output: `dist.tar.gz` containing `dist/` + `marketplace.json`.
+`--pack` output: `kb-docs.tar.gz` containing `kb-docs.json` + `user-guide/` (the built `dist/`, named after the slug). Local inspection only; CI never runs it.
 
 Set `SKIP_PIP_INSTALL=1` to skip automatic pip install in managed environments.
 
@@ -33,10 +36,10 @@ Set `SKIP_PIP_INSTALL=1` to skip automatic pip install in managed environments.
 2. Auto-generate nav from `docs/` frontmatter (title, order, section) + wiki pages
 3. Write merged config to temporary `mkdocs-build.yml`
 4. Run `mkdocs build` against merged config
-5. Render `showcase.html` template with `data/showcase.yml` → `dist/index.html` (headless strips `<nav>`)
-6. Copy `showcase.css` → `dist/showcase.css`
-7. Generate `dist/marketplace.json` with pages manifest
-8. Package into `dist.tar.gz`
+5. Render `showcase.html` template with `data/showcase.yml` → `dist/index.html` (headless strips `<nav>` and adds `data-kb-headless="true"`)
+6. Copy `showcase.css` → `dist/showcase.css` (`admin/` too, standalone only)
+7. Write the computed `pages` list into `apps[0].pages` of `kb-docs.json` (in place; only that key is touched)
+8. `--pack` only: verify headless rules and pack `kb-docs.tar.gz`
 
 `pack.py --serve` generates config then runs `mkdocs serve` with auto-nav (used by `npm run dev`).
 
@@ -54,7 +57,7 @@ showcase.css       → Showcase page styles (copied to dist/ at build time)
 scripts/pack.py    → Primary build script (cross-platform Python)
 scripts/pack.sh    → Bash build script (Linux/CI alternative)
 run.js             → Node wrapper: auto-detects python, invokes pack.py
-marketplace.json   → Knowledge base manifest (name, slug, icon, tags)
+kb-docs.json       → Knowledge base manifest, contract v1 (kbVersion, apps[0]: slug, name, icon, tags, pages)
 mkdocs.yml         → MkDocs config: theme, docs/site dirs (nav is auto-generated)
 admin/index.html   → Sveltia CMS entry point
 admin/config.yml   → Sveltia CMS collections and backend config
@@ -74,13 +77,13 @@ section: Optional Section Name
 - Navigation is **auto-generated** from frontmatter at build time — no manual `nav:` editing
 - Pages are sorted by `order`; pages with `section` are grouped under that section heading
 - Wiki pages placed in `docs/wiki/` are auto-discovered and appended as a "Wiki" nav section
-- `order` and `section` in frontmatter also feed into `dist/marketplace.json` pages manifest
+- `order` and `section` in frontmatter also feed into the `pages` manifest written into `kb-docs.json`
 
 ## CMS (Sveltia CMS)
 
 - Admin panel at `/admin/` — loads Sveltia CMS from CDN
 - Backend: GitHub (configure `backend.repo` in `admin/config.yml`)
-- Collections: docs (folder), showcase (file), marketplace metadata (file)
+- Collections: docs (folder), showcase (file), knowledge base metadata `kb-docs.json` (file)
 - Showcase content lives in `data/showcase.yml` — rendered via Jinja2 template at build time
 - CMS commits trigger CI build; no separate build step needed
 
@@ -88,4 +91,10 @@ section: Optional Section Name
 
 - `theme.name` is `null` — uses fully custom theme from `theme/` directory
 - `theme/main.html` uses Jinja2 with MkDocs template variables (`page.title`, `page.content`, `config.site_name`)
-- Headless mode detected via `config.extra.headless` — hides logo and navigation
+- Headless mode detected via `config.extra.headless` — hides logo, navigation, theme toggle and dark-mode bootstrap; sets `data-kb-headless="true"` on `<html>` (the knowledge base verifies this on every page)
+
+## Knowledge Base Contract
+
+- Normative spec: `contract/ARTIFACT.md`, `contract/HEADLESS_RULES.md`, `contract/kb-docs.schema.json` in AbsaOSS/knowledge-base
+- Publishing: `.github/workflows/pack.yml` runs on `release: published` (checkout → setup-python → `pack.py --headless` → `actions/publish-docs@v1`). Keep it minimal — this repo is the template other docs repos copy
+- Registry entry in the knowledge base is just `{ "repo": "AbsaOSS/knowledge-base-docs-example", "version": "latest" }`; all display metadata lives in `kb-docs.json` here

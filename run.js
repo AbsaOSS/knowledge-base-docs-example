@@ -73,7 +73,7 @@ if (args.includes("--preview")) {
     "showcase.html",
     "showcase.css",
     "main.py",
-    "marketplace.json",
+    "kb-docs.json",
   ];
 
   let rebuilding = false;
@@ -88,7 +88,7 @@ if (args.includes("--preview")) {
     rebuilding = true;
     console.log("\n↻ Change detected — rebuilding dist/ …");
     try {
-      execFileSync(py, ["scripts/pack.py", "--no-package"], {
+      execFileSync(py, ["scripts/pack.py"], {
         cwd: ROOT,
         stdio: "inherit",
         env: { ...env, SKIP_PIP_INSTALL: "1" },

@@ -27,8 +27,8 @@ docs/wiki/
 mkdocs-build.yml
 mkdocs-headless-build.yml
 
-# Packaged artifact (rebuilt on release)
-dist.tar.gz
+# Local preview of the release artifact (pack.py --pack); CI builds it via actions/publish-docs
+kb-docs.tar.gz
 
 # Environment variables
 .env

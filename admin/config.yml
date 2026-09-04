@@ -64,20 +64,43 @@ collections:
             allow_language_selection: false
             output_code_only: true
 
-  # ── Marketplace metadata ─────────────────────────────────────────────────────
+  # ── Knowledge base metadata ──────────────────────────────────────────────────
+  # kb-docs.json is the manifest the knowledge base reads (contract v1). This
+  # template publishes one app, so `apps` holds a single entry.
 
   - name: settings
     label: Settings
     files:
-      - name: marketplace
-        label: Marketplace Metadata
-        file: marketplace.json
+      - name: kb-docs
+        label: Knowledge Base Metadata
+        file: kb-docs.json
         fields:
-          - { name: marketplaceVersion, label: Version, widget: hidden, default: "1" }
-          - { name: name, label: Display Name, widget: string }
-          - { name: slug, label: Slug, widget: string,
-              hint: "Lowercase letters, numbers, hyphens. Becomes the URL path." }
-          - { name: description, label: Description, widget: text }
-          - { name: icon, label: Icon, widget: string }
-          - { name: tags, label: Tags, widget: list, field: { name: tag, widget: string } }
-          - { name: entryPoint, label: Entry Point, widget: hidden, default: "index.html" }
+          - { name: kbVersion, label: Contract Version, widget: hidden, default: "1" }
+          - name: apps
+            label: Apps
+            widget: list
+            min: 1
+            max: 1
+            fields:
+              - { name: slug, label: Slug, widget: string,
+                  hint: "Lowercase letters, numbers, hyphens. Becomes the URL path. Must be unique across the whole knowledge base." }
+              - { name: name, label: Display Name, widget: string }
+              - { name: description, label: Description, widget: text,
+                  hint: "One sentence, 10–280 characters, shown on the catalog card." }
+              - { name: icon, label: Icon, widget: select, default: book-open,
+                  options: [book-open, cube, chip, chart-bar, shield, cog, terminal, globe,
+                            layers, lightning-bolt, document, collection, puzzle, database] }
+              - { name: tags, label: Tags, widget: list, max: 5, required: false,
+                  field: { name: tag, widget: string } }
+              - { name: entryPoint, label: Entry Point, widget: hidden, default: "index.html" }
+              - name: pages
+                label: Pages (generated)
+                widget: list
+                required: false
+                collapsed: true
+                hint: "Written by the build from each page's frontmatter (title, order, section). Do not edit by hand."
+                fields:
+                  - { name: title, label: Title, widget: string }
+                  - { name: path, label: Path, widget: string }
+                  - { name: order, label: Order, widget: number, value_type: int }
+                  - { name: section, label: Section, widget: string, required: false }

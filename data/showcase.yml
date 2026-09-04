@@ -107,7 +107,7 @@ content: |
               <div class="sc-step__num">1</div>
               <div>
                 <p class="sc-step__title">Clone and configure</p>
-                <p class="sc-step__text">Clone this repo, update <code>marketplace.json</code> with your <code>slug</code> and <code>name</code>, and set <code>site_name</code> in <code>mkdocs.yml</code>. That's the only configuration you need.</p>
+                <p class="sc-step__text">Clone this repo, update <code>kb-docs.json</code> with your <code>slug</code> and <code>name</code>, and set <code>site_name</code> in <code>mkdocs.yml</code>. That's the only configuration you need.</p>
               </div>
             </div>
             <div class="sc-step">

@@ -1,0 +1,45 @@
+{
+  "kbVersion": "1",
+  "apps": [
+    {
+      "slug": "user-guide",
+      "name": "Knowledge Base User Guide",
+      "description": "Everything you need to create and publish your own documentation to the Knowledge Base — tools setup, template walkthrough, and registration steps.",
+      "icon": "book-open",
+      "tags": [
+        "guide",
+        "getting-started",
+        "template"
+      ],
+      "entryPoint": "index.html",
+      "pages": [
+        {
+          "title": "Overview",
+          "path": "docs/index.html",
+          "order": 1
+        },
+        {
+          "title": "Customising",
+          "path": "docs/customising/index.html",
+          "order": 2
+        },
+        {
+          "title": "Adding Pages",
+          "path": "docs/adding-pages/index.html",
+          "order": 3
+        },
+        {
+          "title": "Publishing to the Knowledge Base",
+          "path": "docs/publishing/index.html",
+          "order": 5
+        },
+        {
+          "title": "Test page",
+          "path": "docs/test-page/index.html",
+          "order": 5,
+          "section": "Playground"
+        }
+      ]
+    }
+  ]
+}

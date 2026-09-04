@@ -15,20 +15,29 @@
 # limitations under the License.
 #
 
-"""pack.py — build the docs site and package the release artifact.
+"""pack.py — build the docs site for the Knowledge Base.
 
 Usage:
-  python scripts/pack.py            # standalone build
-  python scripts/pack.py --headless # headless build (no top nav)
+  python scripts/pack.py            # standalone build → dist/
+  python scripts/pack.py --headless # headless build → dist/ (what the release publishes)
+  python scripts/pack.py --pack     # headless build + local kb-docs.tar.gz for inspection
   python scripts/pack.py --serve    # generate config + live-reload dev server
 
-Output: dist.tar.gz  (contains dist/ + marketplace.json)
+Every build refreshes `apps[0].pages` in kb-docs.json from the frontmatter of
+docs/*.md, so the manifest the publish action reads always matches the built
+output.
+
+Packing and publishing is the job of the reusable action
+AbsaOSS/knowledge-base/actions/publish-docs (see .github/workflows/pack.yml).
+`--pack` mirrors its artifact layout — kb-docs.json + <slug>/ — so a developer
+can inspect what the knowledge base will receive without cutting a release.
 
 Prerequisites: pip install -r requirements.txt
                Set SKIP_PIP_INSTALL=1 to bypass (e.g. managed environments where packages are pre-installed)
 """
 
 import atexit
+import io
 import json
 import os
 import re
@@ -36,7 +45,16 @@ import shutil
 import subprocess
 import sys
 import tarfile
+import tempfile
 from pathlib import Path
+
+
+# ── Knowledge base contract (contract/ARTIFACT.md in AbsaOSS/knowledge-base) ──
+MANIFEST = "kb-docs.json"
+ASSET_NAME = "kb-docs.tar.gz"
+KB_VERSION = "1"
+HEADLESS_MARKER = 'data-kb-headless="true"'
+SIZE_WARN = 20 * 1024 * 1024
 
 
 # ── Build-time cleanup ────────────────────────────────────────────────────────
@@ -75,6 +93,20 @@ def parse_frontmatter(md_path: str) -> dict:
                 k, v = kv[0].strip(), kv[1].strip()
                 meta[k] = int(v) if v.isdigit() else v
     return meta
+
+
+def output_path(md_rel: str) -> str:
+    """Map a docs/-relative source path to its built HTML path inside dist/.
+
+    MkDocs (use_directory_urls) renders index.md → index.html and any other
+    page → <page>/index.html, preserving subdirectories.
+    """
+    rel = Path(md_rel).with_suffix("").as_posix()
+    if rel == "index":
+        return "docs/index.html"
+    if rel.endswith("/index"):
+        rel = rel[: -len("/index")]
+    return f"docs/{rel}/index.html"
 
 
 # ── Auto-generate nav from frontmatter ───────────────────────────────────────
@@ -139,7 +171,7 @@ def generate_build_configs():
 # ── HTML page wrapper for showcase content ───────────────────────────────────
 SHOWCASE_WRAPPER = """\
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en"{html_attrs}>
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -175,18 +207,22 @@ def render_showcase(headless=False):
             "", content, flags=re.DOTALL
         )
 
-    html = SHOWCASE_WRAPPER.format(content=content)
+    html_attrs = f" {HEADLESS_MARKER}" if headless else ""
+    html = SHOWCASE_WRAPPER.format(html_attrs=html_attrs, content=content)
     Path("dist/index.html").write_text(html, encoding="utf-8")
 
     if Path("showcase.css").exists():
         shutil.copy2("showcase.css", "dist/showcase.css")
 
-    if Path("admin").is_dir():
+    # The CMS is part of the standalone site only. It is not documentation, and
+    # its pages would fail the knowledge base's headless verification.
+    if not headless and Path("admin").is_dir():
         shutil.copytree("admin", "dist/admin", dirs_exist_ok=True)
 
 
-# ── Generate marketplace.json ─────────────────────────────────────────────────
-def generate_marketplace_json():
+# ── Pages manifest → kb-docs.json ─────────────────────────────────────────────
+def generate_pages():
+    """Derive the `pages` navigation manifest from the auto-generated nav."""
     import yaml
 
     cfg = yaml.safe_load(Path("mkdocs-build.yml").read_text(encoding="utf-8"))
@@ -201,11 +237,9 @@ def generate_marketplace_json():
                 for label, value in item.items():
                     if isinstance(value, str):
                         fm = parse_frontmatter(f"docs/{value}")
-                        stem = Path(value).stem
-                        out = "docs/index.html" if stem == "index" else f"docs/{stem}/index.html"
                         entry = {
                             "title": fm.get("title", label),
-                            "path": out,
+                            "path": output_path(value),
                             "order": fm.get("order", order_counter[0]),
                         }
                         if section:
@@ -218,27 +252,131 @@ def generate_marketplace_json():
                         add_entries(value, section=label)
 
     add_entries(nav)
+    return pages
 
-    manifest = json.loads(Path("marketplace.json").read_text(encoding="utf-8"))
-    manifest["pages"] = pages
-    Path("dist/marketplace.json").write_text(
-        json.dumps(manifest, indent=2), encoding="utf-8"
-    )
-    print(f"  {len(pages)} page(s) written to dist/marketplace.json")
+
+def read_manifest() -> dict:
+    path = Path(MANIFEST)
+    if not path.exists():
+        print(f"❌ {MANIFEST} missing — see docs/publishing.md for its shape")
+        sys.exit(1)
+    manifest = json.loads(path.read_text(encoding="utf-8"))
+    apps = manifest.get("apps")
+    if manifest.get("kbVersion") != KB_VERSION or not isinstance(apps, list) or not apps:
+        print(f'❌ {MANIFEST} must have "kbVersion": "{KB_VERSION}" and a non-empty "apps" list')
+        sys.exit(1)
+    if len(apps) != 1:
+        print(f"❌ {MANIFEST} declares {len(apps)} apps; this template builds exactly one")
+        sys.exit(1)
+    return manifest
+
+
+def update_manifest_pages() -> dict:
+    """Write the computed `pages` into apps[0] of kb-docs.json, in place.
+
+    kb-docs.json is the file the publish action reads, so the pages list has to
+    live there rather than in dist/. Only `apps[0].pages` is touched; every
+    other field is the author's.
+    """
+    manifest = read_manifest()
+    pages = generate_pages()
+    manifest["apps"][0]["pages"] = pages
+    Path(MANIFEST).write_text(json.dumps(manifest, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    print(f"  {len(pages)} page(s) written to {MANIFEST} (apps[0].pages)")
+    return manifest
+
+
+# ── Local packing (mirrors actions/publish-docs) ─────────────────────────────
+def verify_headless(dist: Path, app: dict):
+    """Cheap pre-flight of the checks the publish action runs (HEADLESS_RULES.md)."""
+    errors = []
+    entry = app.get("entryPoint", "index.html")
+    if not (dist / entry).exists():
+        errors.append(f'entryPoint "{entry}" does not exist in dist/')
+    for page in app.get("pages", []):
+        if not (dist / page["path"]).exists():
+            errors.append(f'pages entry "{page["title"]}" points at "{page["path"]}", which was not built')
+    for html_file in sorted(dist.rglob("*.html")):
+        html = html_file.read_text(encoding="utf-8", errors="replace")
+        where = html_file.relative_to(dist).as_posix()
+        if HEADLESS_MARKER not in html:
+            errors.append(f"{where}: missing {HEADLESS_MARKER} on <html>")
+        if re.search(r"<base\b", html, re.IGNORECASE):
+            errors.append(f"{where}: contains a <base> element")
+        absolute = [
+            u for u in re.findall(r'\b(?:href|src|action|poster)="(/[^/"][^"]*)"', html)
+            if not u.startswith("/favicon")
+        ]
+        if absolute:
+            errors.append(f'{where}: {len(absolute)} root-relative URL(s), e.g. "{absolute[0]}"')
+    if errors:
+        print("❌ dist/ does not satisfy the knowledge base headless rules:")
+        for e in errors:
+            print(f"   • {e}")
+        sys.exit(1)
+
+
+def pack_artifact(manifest: dict):
+    """Pack kb-docs.json + <slug>/ (= dist/) into kb-docs.tar.gz.
+
+    Same layout and the same deterministic metadata (fixed mtime, uid/gid 0,
+    members sorted by name) as the publish action, so the local artifact is
+    byte-comparable with a released one.
+    """
+    app = manifest["apps"][0]
+    slug = app["slug"]
+    dist = Path("dist")
+    verify_headless(dist, app)
+
+    epoch = 1577836800  # 2020-01-01T00:00:00Z, matches the action
+
+    def normalise(info: tarfile.TarInfo) -> tarfile.TarInfo:
+        info.uid = info.gid = 0
+        info.uname = info.gname = ""
+        info.mtime = epoch
+        return info
+
+    out = Path(ASSET_NAME)
+    out.unlink(missing_ok=True)
+
+    with tempfile.TemporaryDirectory() as tmp:
+        stage = Path(tmp)
+        shutil.copytree(dist, stage / slug)
+        manifest_bytes = (json.dumps(manifest, indent=2, ensure_ascii=False) + "\n").encode("utf-8")
+
+        with tarfile.open(out, "w:gz") as tar:
+            info = tarfile.TarInfo(MANIFEST)
+            info.size = len(manifest_bytes)
+            tar.addfile(normalise(info), io.BytesIO(manifest_bytes))
+
+            root = stage / slug
+            members = sorted(root.rglob("*"), key=lambda p: p.relative_to(stage).as_posix())
+            tar.add(root, arcname=slug, recursive=False, filter=normalise)
+            for member in members:
+                tar.add(member, arcname=member.relative_to(stage).as_posix(),
+                        recursive=False, filter=normalise)
+
+    size = out.stat().st_size
+    print(f"✅ {ASSET_NAME} ready ({human_size(out)})")
+    print(f"   {MANIFEST}   → manifest with {len(app.get('pages', []))} page(s)")
+    print(f"   {slug}/{app.get('entryPoint', 'index.html')}  → entry point")
+    if size > SIZE_WARN:
+        print(f"⚠  Artifact exceeds the {SIZE_WARN // (1024 * 1024)} MB target — every knowledge base build downloads it")
 
 
 # ── Main ──────────────────────────────────────────────────────────────────────
 def main():
     headless = False
     serve = False
-    no_package = False
+    pack = False
     for arg in sys.argv[1:]:
         if arg == "--headless":
             headless = True
         elif arg == "--serve":
             serve = True
-        elif arg == "--no-package":
-            no_package = True
+        elif arg == "--pack":
+            pack = True
+            headless = True  # only a headless build is a valid knowledge base artifact
         else:
             print(f"Unknown argument: {arg}")
             sys.exit(1)
@@ -260,59 +398,33 @@ def main():
     print("▶ Generating build configs...")
     generate_build_configs()
 
+    mode = " (headless)" if headless else ""
+    print(f"▶ Building docs{mode}...")
+    run(sys.executable, "-m", "mkdocs", "build",
+        "-f", "mkdocs-headless-build.yml" if headless else "mkdocs-build.yml")
+
+    if not Path("dist/docs/index.html").exists():
+        print("❌ dist/docs/index.html missing — build failed")
+        sys.exit(1)
+
+    print(f"▶ Rendering showcase{mode}...")
+    render_showcase(headless=headless)
+
+    print(f"▶ Updating {MANIFEST} pages manifest...")
+    manifest = update_manifest_pages()
+
+    if pack:
+        print(f"▶ Packing {ASSET_NAME} (local preview of the publish action)...")
+        pack_artifact(manifest)
+        return
+
+    print(f"✅ dist/ ready{mode}")
     if headless:
-        print("▶ Building docs (headless)...")
-        run(sys.executable, "-m", "mkdocs", "build", "-f", "mkdocs-headless-build.yml")
-
-        if not Path("dist/docs/index.html").exists():
-            print("❌ dist/docs/index.html missing — build failed")
-            sys.exit(1)
-
-        print("▶ Rendering showcase (headless)...")
-        render_showcase(headless=True)
-
-        print("▶ Generating dist/marketplace.json with pages manifest...")
-        generate_marketplace_json()
-
-        if no_package:
-            print("✅ dist/ rebuilt (headless, packaging skipped)")
-            return
-
-        print("▶ Packaging (headless)...")
-        with tarfile.open("dist.tar.gz", "w:gz") as tar:
-            tar.add("dist")
-            tar.add("marketplace.json")
-
-        size = human_size(Path("dist.tar.gz"))
-        print(f"✅ dist.tar.gz ready ({size}) [headless]")
         print("   dist/index.html      → showcase without nav (headless entry point)")
         print("   dist/docs/index.html → documentation")
-
+        print(f"   Publish: the release workflow hands dist/ + {MANIFEST} to actions/publish-docs")
+        print(f"   Inspect: python scripts/pack.py --pack → {ASSET_NAME}")
     else:
-        print("▶ Building docs...")
-        run(sys.executable, "-m", "mkdocs", "build", "-f", "mkdocs-build.yml")
-
-        if not Path("dist/docs/index.html").exists():
-            print("❌ dist/docs/index.html missing — build failed")
-            sys.exit(1)
-
-        print("▶ Rendering showcase...")
-        render_showcase(headless=False)
-
-        print("▶ Generating dist/marketplace.json with pages manifest...")
-        generate_marketplace_json()
-
-        if no_package:
-            print("✅ dist/ rebuilt (packaging skipped)")
-            return
-
-        print("▶ Packaging...")
-        with tarfile.open("dist.tar.gz", "w:gz") as tar:
-            tar.add("dist")
-            tar.add("marketplace.json")
-
-        size = human_size(Path("dist.tar.gz"))
-        print(f"✅ dist.tar.gz ready ({size})")
         print("   dist/index.html      → product showcase (entry point)")
         print("   dist/docs/index.html → documentation")
 
