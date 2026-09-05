@@ -49,6 +49,13 @@ import tempfile
 from pathlib import Path
 
 
+# Windows consoles default to a legacy code page that cannot encode the
+# progress glyphs printed below; force UTF-8 so a local build does not crash.
+for _stream in (sys.stdout, sys.stderr):
+    if hasattr(_stream, "reconfigure"):
+        _stream.reconfigure(encoding="utf-8", errors="replace")
+
+
 # ── Knowledge base contract (contract/ARTIFACT.md in AbsaOSS/knowledge-base) ──
 MANIFEST = "kb-docs.json"
 ASSET_NAME = "kb-docs.tar.gz"

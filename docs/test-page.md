@@ -1,6 +1,6 @@
 ---
 title: Test page
-order: 5
+order: 6
 section: Playground
 ---
 This is some testing page ... !

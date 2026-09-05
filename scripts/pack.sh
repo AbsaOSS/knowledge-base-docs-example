@@ -223,20 +223,46 @@ if [ ! -f dist/docs/index.html ]; then
 fi
 
 if [ "$HEADLESS" = true ]; then
-  echo "▶ Copying showcase (without nav) as entry point..."
-  $PYTHON - <<'PY'
-import re, pathlib
-html = pathlib.Path('showcase.html').read_text(encoding='utf-8')
-html = re.sub(r'<!-- ── Navigation ── -->\s*<nav[^>]*>.*?</nav>', '', html, flags=re.DOTALL)
-# The knowledge base verifies every HTML file carries the headless marker on <html>.
-html = re.sub(r'<html\b', '<html data-kb-headless="true"', html, count=1)
+  echo "▶ Rendering showcase (headless)..."
+else
+  echo "▶ Rendering showcase..."
+fi
+# Same as render_showcase() in pack.py: the raw HTML under `content:` in
+# data/showcase.yml is wrapped into a full page; headless drops the <nav> block
+# between the Navigation markers and stamps the headless marker on <html>.
+HEADLESS=$HEADLESS $PYTHON - <<'PY'
+import os, pathlib, re, yaml
+headless = os.environ.get('HEADLESS') == 'true'
+data = yaml.safe_load(pathlib.Path('data/showcase.yml').read_text(encoding='utf-8')) or {}
+content = data.get('content', '')
+if not content:
+    print('  ⚠ data/showcase.yml has no content — skipping showcase render')
+    raise SystemExit(0)
+if headless:
+    content = re.sub(r'<!-- ── Navigation ── -->\s*<nav[^>]*>.*?</nav>\s*<!-- ── /Navigation ── -->',
+                     '', content, flags=re.DOTALL)
+attrs = ' data-kb-headless="true"' if headless else ''
+html = f"""<!DOCTYPE html>
+<html lang="en"{attrs}>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Showcase</title>
+  <link rel="stylesheet" href="docs/style.css" />
+  <link rel="stylesheet" href="showcase.css" />
+</head>
+<body>
+{content}
+</body>
+</html>"""
 pathlib.Path('dist/index.html').write_text(html, encoding='utf-8')
 PY
-else
-  echo "▶ Copying showcase as entry point..."
-  cp showcase.html dist/index.html
-fi
 [ -f showcase.css ] && cp showcase.css dist/showcase.css
+# The CMS is part of the standalone site only; its pages would fail the
+# knowledge base's headless verification.
+if [ "$HEADLESS" != true ] && [ -d admin ]; then
+  cp -r admin dist/admin
+fi
 
 echo "▶ Updating $MANIFEST pages manifest..."
 update_manifest_pages

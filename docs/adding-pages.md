@@ -33,23 +33,26 @@ You can also create pages through the CMS at `/admin/`.
 
 ## Adding a standalone HTML page
 
-Standalone HTML pages (like `showcase.html`) are copied into `dist/` by the build script — they live alongside the MkDocs output.
+Standalone HTML pages are copied into `dist/` by the build script — they live alongside the MkDocs output, next to the showcase landing page.
 
 **Step 1** — Create your HTML file at the repo root:
 
 ```
 knowledge-base-docs-example/
-├── showcase.html
+├── showcase.css
 └── calculator.html   ← new standalone page
 ```
 
-**Step 2** — In `scripts/pack.py`, add a copy line in the section that handles showcase assets:
+Give it `data-kb-headless="true"` on `<html>`, no `<base>`, and only relative
+`href`/`src` paths — the publish action checks every HTML file in `dist/`.
 
-```bash
-cp calculator.html dist/calculator.html
+**Step 2** — In `scripts/pack.py`, copy it next to the showcase in `render_showcase()`:
+
+```python
+shutil.copy2("calculator.html", "dist/calculator.html")
 ```
 
-**Step 3** — Link to it from any Markdown page using a root-relative path:
+**Step 3** — Link to it from any Markdown page using a relative path:
 
 ```markdown
 [Open the calculator](../calculator.html)

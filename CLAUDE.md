@@ -36,7 +36,7 @@ Set `SKIP_PIP_INSTALL=1` to skip automatic pip install in managed environments.
 2. Auto-generate nav from `docs/` frontmatter (title, order, section) + wiki pages
 3. Write merged config to temporary `mkdocs-build.yml`
 4. Run `mkdocs build` against merged config
-5. Render `showcase.html` template with `data/showcase.yml` → `dist/index.html` (headless strips `<nav>` and adds `data-kb-headless="true"`)
+5. Wrap the raw HTML under `content:` in `data/showcase.yml` into `dist/index.html` (headless strips the `<nav>` between the Navigation markers and adds `data-kb-headless="true"`)
 6. Copy `showcase.css` → `dist/showcase.css` (`admin/` too, standalone only)
 7. Write the computed `pages` list into `apps[0].pages` of `kb-docs.json` (in place; only that key is touched)
 8. `--pack` only: verify headless rules and pack `kb-docs.tar.gz`
@@ -52,7 +52,7 @@ docs/              → Markdown source files with YAML frontmatter
 data/showcase.yml  → Showcase landing page content (CMS-editable)
 theme/main.html    → Jinja2 page template (branded, dark mode toggle)
 theme/style.css    → Pre-compiled Tailwind CSS (edit Tailwind source to regenerate)
-showcase.html      → Jinja2 template for showcase (rendered from data/showcase.yml)
+showcase.html      → legacy Jinja2 showcase template; NOT used by the build (content lives in data/showcase.yml)
 showcase.css       → Showcase page styles (copied to dist/ at build time)
 scripts/pack.py    → Primary build script (cross-platform Python)
 scripts/pack.sh    → Bash build script (Linux/CI alternative)
@@ -84,7 +84,7 @@ section: Optional Section Name
 - Admin panel at `/admin/` — loads Sveltia CMS from CDN
 - Backend: GitHub (configure `backend.repo` in `admin/config.yml`)
 - Collections: docs (folder), showcase (file), knowledge base metadata `kb-docs.json` (file)
-- Showcase content lives in `data/showcase.yml` — rendered via Jinja2 template at build time
+- Showcase content lives in `data/showcase.yml` as raw HTML (`content:` key) — wrapped into a full page at build time
 - CMS commits trigger CI build; no separate build step needed
 
 ## MkDocs Theme

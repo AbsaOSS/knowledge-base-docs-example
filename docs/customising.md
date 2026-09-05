@@ -78,7 +78,7 @@ theme:
 
 ## Showcase landing page
 
-The landing page at `dist/index.html` is rendered from `data/showcase.yml` through a Jinja2 template (`showcase.html`). Edit the YAML file to change headings, feature cards, steps, and CTA buttons — or use the CMS at `/admin/` for a visual editor.
+The landing page at `dist/index.html` is the raw HTML stored under `content:` in `data/showcase.yml`, wrapped into a full page by the build script. Edit that HTML to change headings, feature cards, steps, and CTA buttons — or use the CMS at `/admin/` for a live-preview editor. Keep the `<!-- ── Navigation ── -->` … `<!-- ── /Navigation ── -->` markers around the `<nav>`: the headless build removes exactly that block.
 
 Styles live in `showcase.css`. Design tokens are at the top of the file.
 
