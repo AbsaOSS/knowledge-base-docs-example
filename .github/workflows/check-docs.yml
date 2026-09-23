@@ -1,0 +1,37 @@
+name: Check docs
+
+# Runs the knowledge base contract checks on every pull request, so a problem
+# that would make the release-time publish fail shows up here first.
+#
+# The same checker publish-docs runs, but nothing is packed or released.
+# Errors fail the check. Warnings are annotated on the run and listed in the
+# job summary; add `strict: true` below to fail on warnings as well.
+#
+# This repo is the template other docs repos copy. Keep this file minimal:
+# checkout, setup-python, the same build as pack.yml, one `uses:`.
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: Build headless + check against the knowledge base contract
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Build (headless)
+        run: python scripts/pack.py --headless
+
+      - uses: AbsaOSS/knowledge-base/actions/check-docs@v1
+        with:
+          manifest: kb-docs.json
+          dist: dist
