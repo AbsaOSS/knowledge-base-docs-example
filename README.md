@@ -16,6 +16,7 @@ Built with [MkDocs](https://www.mkdocs.org/) — no Node.js required.
 | `kb-docs.json` | Knowledge base manifest (contract v1) |
 | `scripts/` | Build scripts (`pack.py`, `pack.sh`) |
 | `.github/workflows/pack.yml` | Publishes `kb-docs.tar.gz` to the knowledge base on every GitHub Release |
+| `.github/workflows/check-docs.yml` | Runs the same contract checks on every pull request |
 
 ## Quick start
 
@@ -72,6 +73,10 @@ The `Publish docs` workflow builds the headless site and hands `dist/` + `kb-doc
 to `AbsaOSS/knowledge-base/actions/publish-docs`, which validates them against the
 contract, packs `kb-docs.tar.gz` and attaches it to the release. The knowledge base
 fetches this artifact automatically.
+
+The `Check docs` workflow runs the same checks on every pull request
+(`AbsaOSS/knowledge-base/actions/check-docs`), without releasing anything. Errors fail
+the pull request; warnings are annotated and listed in the job summary.
 
 ## Registering in the knowledge base
 

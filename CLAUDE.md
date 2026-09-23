@@ -97,4 +97,5 @@ section: Optional Section Name
 
 - Normative spec: `contract/ARTIFACT.md`, `contract/HEADLESS_RULES.md`, `contract/kb-docs.schema.json` in AbsaOSS/knowledge-base
 - Publishing: `.github/workflows/pack.yml` runs on `release: published` (checkout → setup-python → `pack.py --headless` → `actions/publish-docs@v1`). Keep it minimal — this repo is the template other docs repos copy
+- PR check: `.github/workflows/check-docs.yml` runs on `pull_request` with the same build, then `actions/check-docs@v1` (same contract checks, no release; errors fail, warnings annotated, `strict` off). Preview locally: `node ../knowledge-base/actions/lib/check-cli.js --manifest kb-docs.json --dist dist`
 - Registry entry in the knowledge base is just `{ "repo": "AbsaOSS/knowledge-base-docs-example", "version": "latest" }`; all display metadata lives in `kb-docs.json` here
