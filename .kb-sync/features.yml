@@ -9,8 +9,8 @@
 # `synced` is empty until the first full run documents a release.
 
 synced:
-  tag: null
-  sha: null
+  tag: v1.3.1
+  sha: f95eb35b47051b66fb0154319780aefe4431ba17
 
 # Upstream paths that never carry user-facing behaviour; changes here are ignored.
 ignore:
