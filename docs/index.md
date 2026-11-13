@@ -20,15 +20,19 @@ At build time it:
 4. Produces a single static `dist/`, served by nginx in Docker or embedded into a
    host application as a web fragment.
 
-The output makes no third-party requests at runtime.
+The output makes no third-party requests at runtime. This guide describes release
+**v1.3.1**.
 
 ## Who this guide is for
 
 | You want to… | Start with |
 |---|---|
-| Publish your team's documentation to the Knowledge Base | Publishing your docs |
-| Run your own Knowledge Base deployment | Running a Knowledge Base |
-| Embed the Knowledge Base inside a host application | Embedding |
+| Understand how the portal works and what readers see | [How it works](kb/how-it-works.md) |
+| Publish your team's documentation to the Knowledge Base | [Choosing how to onboard](kb/onboarding.md) |
+| Check your docs against the contract | [Contract rules and the checker](kb/rules.md) |
+| Run your own Knowledge Base deployment | [Registry](kb/registry.md), [Building](kb/building.md), [Deployment](kb/deployment.md) |
+| Embed the Knowledge Base inside a host application | [Web fragment embedding](kb/embedding.md) |
+| Let an AI agent onboard a repo | [Agent skill](kb/agent-skill.md) |
 | Start a new docs site quickly | [Using the Docs Template](template.md) |
 
 ## About this site
