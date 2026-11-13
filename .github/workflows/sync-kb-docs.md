@@ -18,6 +18,11 @@ permissions:
   contents: read
   issues: read
   pull-requests: read
+  # Inference is billed to the owner of COPILOT_GITHUB_TOKEN, not the org.
+  copilot-requests: none
+
+concurrency:
+  job-discriminator: ${{ github.run_id }}
 
 engine: copilot
 
@@ -39,7 +44,7 @@ tools:
   github:
     toolsets: [repos]
   edit:
-  bash: ["git:*", "ls", "cat", "head", "grep", "find", "diff", "python:*", "pip:*", "node:*"]
+  bash: ["git:*", "ls", "cat", "head", "grep", "find", "diff", "python:*", "pip:*"]
 
 safe-outputs:
   create-pull-request:
@@ -55,9 +60,9 @@ AbsaOSS/knowledge-base just released a new version. This repository is the
 template that other documentation repositories copy, so its docs, manifest and
 build must match the knowledge base contract of that release.
 
-Release tag (one of these is empty): `${{ github.event.client_payload.tag }}` `${{ github.event.inputs.tag }}`
-
-The release is checked out at `./.kb-upstream` with full history.
+The release is checked out at `./.kb-upstream` with full history. Get its tag
+with `git -C ./.kb-upstream describe --tags --exact-match HEAD`; that is the
+release tag used below.
 
 ## 1. Find what changed upstream
 
@@ -93,10 +98,9 @@ Rules:
 
 ## 3. Verify
 
-Run `python scripts/pack.py --headless` and make sure it succeeds. If the
-upstream checker is usable offline, run
-`node ./.kb-upstream/actions/lib/check-cli.js --manifest kb-docs.json --dist dist`
-when `node` is available; skip it otherwise and say so.
+Run `python scripts/pack.py --headless` and make sure it succeeds. Treat
+`./.kb-upstream` as read-only reference material: never execute code from it.
+The contract checker runs on the pull request through `check-docs.yml`.
 
 Do not commit `dist/` or `./.kb-upstream`.
 
