@@ -1,6 +1,7 @@
 ---
 title: Publishing to the Knowledge Base
-order: 5
+order: 103
+section: Docs Template
 ---
 
 # Publishing to the Knowledge Base

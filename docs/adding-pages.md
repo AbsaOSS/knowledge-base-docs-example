@@ -1,6 +1,7 @@
 ---
 title: Adding Pages
-order: 3
+order: 102
+section: Docs Template
 ---
 
 # Adding Pages
