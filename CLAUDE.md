@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-MkDocs template for publishing documentation to the Knowledge Base. Python-based, no Node.js required. Custom Jinja2 theme with pre-built Tailwind CSS in `theme/`.
+The Knowledge Base user guide, built with — and doubling as an example of — the MkDocs docs template it documents. Product pages (`docs/index.md`, `docs/kb/`, `data/showcase.yml`) are maintained by the `sync-kb-docs` agentic workflow from knowledge-base releases; the template pages are the "Docs Template" section (`docs/template.md`, `customising.md`, `adding-pages.md`, `publishing.md`). Python-based, no Node.js required. Custom Jinja2 theme with pre-built Tailwind CSS in `theme/`.
 
 ## Build Commands
 
@@ -61,6 +61,8 @@ kb-docs.json       → Knowledge base manifest, contract v1 (kbVersion, apps[0]:
 mkdocs.yml         → MkDocs config: theme, docs/site dirs (nav is auto-generated)
 admin/index.html   → Sveltia CMS entry point
 admin/config.yml   → Sveltia CMS collections and backend config
+.kb-sync/features.yml → feature map: knowledge-base source files → guide pages, plus last synced release
+.github/workflows/sync-kb-docs.md → gh-aw agentic workflow (source); `gh aw compile` regenerates `sync-kb-docs.lock.yml`
 ```
 
 ## Documentation Conventions

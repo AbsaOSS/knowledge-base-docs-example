@@ -1,0 +1,220 @@
+# Feature map: AbsaOSS/knowledge-base → this user guide.
+#
+# Maintained by the sync-kb-docs agentic workflow (.github/workflows/sync-kb-docs.md).
+# Each feature names the upstream files that define it (`sources`, most authoritative
+# first) and the page that documents it. The workflow diffs `synced.sha..<new release>`,
+# maps changed paths to features and updates the matching pages. A changed user-facing
+# path that matches no feature is a new feature: add an entry and document it.
+#
+# `synced` is empty until the first full run documents a release.
+
+synced:
+  tag: null
+  sha: null
+
+# Upstream paths that never carry user-facing behaviour; changes here are ignored.
+ignore:
+  - tests/**
+  - "**/*.selftest.js"
+  - "**/package-lock.json"
+  - "**/uv.lock"
+  - CONTRIBUTING.md
+  - CLAUDE.md
+  - AGENTS.md
+  - .github/ISSUE_TEMPLATE/**
+  - .github/workflows/ci.yml
+  - .github/workflows/pr-requirements.yml
+  - .github/workflows/pages.yml
+  - docs/adr/**
+
+features:
+  # ── Concepts ────────────────────────────────────────────────────────────
+  - id: overview
+    title: What the Knowledge Base is and how a build works
+    audience: everyone
+    page: docs/index.md
+    sources: [README.md, scripts/build-vite.js]
+
+  - id: portal-ui
+    title: Catalog landing page, masthead, External badge, light-only theme
+    audience: reader
+    page: docs/kb/how-it-works.md
+    sources: [src/pages/index.astro, src/components/Masthead.astro, src/components/AppCard.astro, contract/STYLE_GUIDE.md]
+
+  - id: html-rehosting
+    title: URL rewriting under /knowledge-base/{slug}/, CSS layering, stripped handlers
+    audience: author
+    page: docs/kb/how-it-works.md
+    sources: [src/utils/transform.js, src/utils/css-layers.js, src/utils/config.js]
+
+  # ── Publish your docs ───────────────────────────────────────────────────
+  - id: onboarding-choice
+    title: Choosing single-page, packaged or iframe onboarding
+    audience: author
+    page: docs/kb/onboarding.md
+    sources: [contract/SINGLE_PAGE.md, skills/kb-docs-add/SKILL.md, README.md]
+
+  - id: onboarding-single-page
+    title: Single-page onboarding from Markdown files
+    audience: author
+    page: docs/kb/single-page.md
+    sources: [actions/publish-single-page-docs/action.yml, contract/SINGLE_PAGE.md, actions/publish-single-page-docs/src/**]
+
+  - id: single-page-rendering
+    title: Markdown features, sanitisation and mermaid in single-page docs
+    audience: author
+    page: docs/kb/single-page.md
+    sources: [actions/publish-single-page-docs/src/markdown.js, actions/publish-single-page-docs/src/sanitize.js, actions/publish-single-page-docs/src/template.js]
+
+  - id: onboarding-packaged
+    title: Packaged onboarding from a static docs site
+    audience: author
+    page: docs/kb/packaged.md
+    sources: [contract/HEADLESS_RULES.md, contract/ARTIFACT.md, actions/publish-docs/action.yml]
+
+  - id: headless-rules
+    title: Headless build requirements
+    audience: author
+    page: docs/kb/packaged.md
+    sources: [contract/HEADLESS_RULES.md]
+
+  - id: style-tokens
+    title: Design tokens and light-only styling
+    audience: author
+    page: docs/kb/style-tokens.md
+    sources: [contract/STYLE_GUIDE.md, src/styles/knowledge-base.css]
+
+  - id: manifest
+    title: kb-docs.json fields, limits and versioning
+    audience: author
+    page: docs/kb/manifest.md
+    sources: [contract/kb-docs.schema.json, contract/ARTIFACT.md, actions/lib/manifest.js, src/utils/registry.js]
+
+  - id: artifact
+    title: kb-docs.tar.gz layout, archive safety and size limits
+    audience: author
+    page: docs/kb/manifest.md
+    sources: [contract/ARTIFACT.md, scripts/artifacts.js, actions/lib/pack.js]
+
+  - id: rules
+    title: Contract rule IDs, severities and fixes
+    audience: author
+    page: docs/kb/rules.md
+    sources: [contract/RULES.md, actions/lib/rules.js, actions/lib/check.js]
+
+  - id: checker-cli
+    title: Running the contract checker locally
+    audience: author
+    page: docs/kb/rules.md
+    sources: [actions/lib/check-cli.js, contract/RULES.md]
+
+  - id: action-publish-docs
+    title: publish-docs action inputs and outputs
+    audience: author
+    page: docs/kb/actions.md
+    sources: [actions/publish-docs/action.yml, actions/publish-docs/src/index.js, actions/lib/release.cjs]
+
+  - id: action-check-docs
+    title: check-docs pull-request action
+    audience: author
+    page: docs/kb/actions.md
+    sources: [actions/check-docs/action.yml, actions/check-docs/src/index.js]
+
+  - id: action-publish-single-page-docs
+    title: publish-single-page-docs action inputs and outputs
+    audience: author
+    page: docs/kb/actions.md
+    sources: [actions/publish-single-page-docs/action.yml, actions/publish-single-page-docs/src/inputs.js]
+
+  - id: action-versioning
+    title: Pinning actions to the floating major tag
+    audience: author
+    page: docs/kb/actions.md
+    sources: [.github/workflows/release-actions.yml, contract/ARTIFACT.md]
+
+  - id: private-network-inputs
+    title: npm registry and Node mirror inputs for private runners
+    audience: author
+    page: docs/kb/private-networks.md
+    sources: [actions/lib/npm-registry.sh, actions/publish-docs/action.yml, contract/DEPLOYMENT.md]
+
+  - id: kb-docs-add-skill
+    title: kb-docs-add agent skill (onboard and audit modes)
+    audience: author
+    page: docs/kb/agent-skill.md
+    sources: [skills/kb-docs-add/SKILL.md, skills/kb-docs-add/references/**, skills/README.md]
+
+  # ── Run a knowledge base ────────────────────────────────────────────────
+  - id: registry
+    title: apps.json entry sources (repo, localPath, prebuilt) and validation
+    audience: operator
+    page: docs/kb/registry.md
+    sources: [src/utils/registry.js, scripts/fetch-apps.js, scripts/build-vite.js, contract/ARTIFACT.md]
+
+  - id: registry-iframe
+    title: iframe entries for externally hosted docs
+    audience: operator
+    page: docs/kb/registry.md
+    sources: [src/utils/registry.js, src/pages/[...path].astro, README.md]
+
+  - id: registry-options
+    title: optional, headless and pack per-entry options; KB_REGISTRY
+    audience: operator
+    page: docs/kb/registry.md
+    sources: [src/utils/registry.js, scripts/build-vite.js, src/utils/config.js]
+
+  - id: build-modes
+    title: Build commands, --local/--headless/--strict, KB_HEADLESS/KB_STRICT
+    audience: operator
+    page: docs/kb/building.md
+    sources: [scripts/build-vite.js, src/utils/config.js, package.json, scripts/check-artifact.js]
+
+  - id: build-provenance
+    title: kb-build.json provenance
+    audience: operator
+    page: docs/kb/building.md
+    sources: [scripts/build-vite.js, contract/DEPLOYMENT.md]
+
+  - id: deployment-repo
+    title: Deployment repository pattern and rebuild triggers
+    audience: operator
+    page: docs/kb/deployment.md
+    sources: [contract/DEPLOYMENT.md, examples/deployment-repo/**]
+
+  - id: build-image-workflow
+    title: Reusable build-image.yml inputs, secrets and outputs
+    audience: operator
+    page: docs/kb/deployment.md
+    sources: [.github/workflows/build-image.yml, contract/DEPLOYMENT.md]
+
+  - id: rollback
+    title: Rolling back a deployment
+    audience: operator
+    page: docs/kb/deployment.md
+    sources: [contract/DEPLOYMENT.md]
+
+  - id: docker-nginx
+    title: Site image, nginx routes, caching, CSP and health check
+    audience: operator
+    page: docs/kb/docker-nginx.md
+    sources: [Dockerfile, nginx.conf, nginx.headers.conf, .dockerignore]
+
+  - id: private-networks
+    title: Private registries, mirrors and CA certificates for builds
+    audience: operator
+    page: docs/kb/private-networks.md
+    sources: [contract/DEPLOYMENT.md, Dockerfile, .github/workflows/build-image.yml]
+
+  # ── Embed in a host app ─────────────────────────────────────────────────
+  - id: web-fragment
+    title: Embedding the Knowledge Base as a web fragment
+    audience: integrator
+    page: docs/kb/embedding.md
+    sources: [README.md, src/scripts/embedded-transitions.js, src/templates/shadow-compat.js]
+
+  # ── Reference ───────────────────────────────────────────────────────────
+  - id: changelog
+    title: User-facing changes per knowledge-base release
+    audience: everyone
+    page: docs/kb/changelog.md
+    sources: []

@@ -14,8 +14,8 @@
 # limitations under the License.
 #
 
-site_name: Knowledge Base Docs Example
-site_description: MkDocs template for publishing documentation to the Knowledge Base — clone, write Markdown, publish.
+site_name: Knowledge Base User Guide
+site_description: User guide for the Knowledge Base — publish docs, run a knowledge base, embed it and connect AI tools. Built with the docs template it documents.
 docs_dir: docs
 site_dir: dist/docs
 

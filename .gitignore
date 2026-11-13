@@ -30,6 +30,9 @@ mkdocs-headless-build.yml
 # Local preview of the release artifact (pack.py --pack); CI builds it via actions/publish-docs
 kb-docs.tar.gz
 
+# knowledge-base checkout used by the sync-kb-docs agentic workflow
+.kb-upstream/
+
 # Environment variables
 .env
 .env.local

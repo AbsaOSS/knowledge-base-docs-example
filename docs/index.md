@@ -3,49 +3,36 @@ title: Overview
 order: 1
 ---
 
-# Knowledge Base Docs Example
+# Knowledge Base
 
-A ready-to-use MkDocs template for publishing documentation to the Knowledge Base. Clone it, write Markdown, tag a release — your docs are live.
+The Knowledge Base is a **build-time aggregator** for static documentation sites.
+Each team keeps its docs in its own repository; the Knowledge Base collects them
+into one portal served under `/knowledge-base/`, with a shared masthead and a
+catalog landing page listing every registered app.
 
-## What is included
+At build time it:
 
-| File / Folder | Purpose |
+1. Obtains each registered app's built output — a GitHub Release artifact
+   (`kb-docs.tar.gz`), a local checkout, or a prebuilt tarball or directory.
+2. Rewrites every page's URLs to `/knowledge-base/{slug}/…` and wraps each page
+   in the Knowledge Base masthead.
+3. Generates the catalog landing page.
+4. Produces a single static `dist/`, served by nginx in Docker or embedded into a
+   host application as a web fragment.
+
+The output makes no third-party requests at runtime.
+
+## Who this guide is for
+
+| You want to… | Start with |
 |---|---|
-| `docs/*.md` | Your Markdown content — edit these |
-| `mkdocs.yml` | Site config — update `site_name` (nav is auto-generated) |
-| `data/showcase.yml` | Product landing page content — edit to match your tool |
-| `kb-docs.json` | Knowledge base manifest — set your `slug`, `name`, `description` |
-| `theme/` | Pre-built branded theme — no changes needed |
-| `requirements.txt` | Python dependencies — no changes needed |
-| `scripts/` | Build + package scripts — no changes needed |
-| `.github/workflows/pack.yml` | Publishes to the knowledge base on release — no changes needed |
+| Publish your team's documentation to the Knowledge Base | Publishing your docs |
+| Run your own Knowledge Base deployment | Running a Knowledge Base |
+| Embed the Knowledge Base inside a host application | Embedding |
+| Start a new docs site quickly | [Using the Docs Template](template.md) |
 
-## Quick start
+## About this site
 
-```bash
-# 1 — clone
-git clone <your-repo-url> my-team-docs
-cd my-team-docs
-
-# 2 — install MkDocs (one time)
-pip install -r requirements.txt
-
-# 3 — live preview at http://localhost:8000
-mkdocs serve
-```
-
-## What you need to change
-
-Only three things need updating to make this template your own:
-
-1. **`kb-docs.json`** — set your `slug`, `name`, and `description`
-2. **`mkdocs.yml`** — set `site_name`
-3. **`docs/*.md`** — replace the starter pages with your content
-
-The build script, CSS, and CI pipeline work out of the box and never need to be touched.
-
-## Full documentation
-
-The complete user guide — including tool setup for non-technical writers and the knowledge base registration process — is available in the knowledge base documentation.
-
-Continue reading: [Customising](customising.md) · [Adding Pages](adding-pages.md)
+This guide is itself published to the Knowledge Base with the
+[Docs Template](template.md) it describes, so it doubles as a working example of
+a packaged documentation app.

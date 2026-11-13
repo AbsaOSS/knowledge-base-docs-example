@@ -1,6 +1,7 @@
 ---
 title: Customising
-order: 2
+order: 101
+section: Docs Template
 ---
 # Customising the Template
 
