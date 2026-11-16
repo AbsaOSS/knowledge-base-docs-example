@@ -10,6 +10,7 @@ permissions:
 
 jobs:
   check-pr:
+    name: PR Requirements
     runs-on: ubuntu-latest
     steps:
       - name: Check PR requirements
