@@ -1,4 +1,4 @@
-name: Check PR Requirements
+name: PR Requirements
 
 on:
   pull_request:
