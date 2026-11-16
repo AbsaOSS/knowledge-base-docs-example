@@ -18,7 +18,7 @@ backend:
   base_url: https://sveltia-cms-auth.kb-cms.workers.dev
   auth_endpoint: auth
 
-local_backend: true  # uncomment for local dev (run: npx decap-server)
+# local_backend: true  # uncomment for local dev (run: npx decap-server)
 
 # media_folder = where uploads are committed in the repo.
 # public_folder = the path written into Markdown. Keep it RELATIVE (no leading
