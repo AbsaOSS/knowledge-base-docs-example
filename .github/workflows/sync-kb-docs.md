@@ -54,7 +54,6 @@ tools:
 
 safe-outputs:
   create-pull-request:
-    title-prefix: "[kb-docs] "
     labels: [documentation]
     draft: true
     if-no-changes: "warn"

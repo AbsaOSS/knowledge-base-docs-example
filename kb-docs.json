@@ -25,6 +25,102 @@
           "section": "Playground"
         },
         {
+          "title": "How it works",
+          "path": "docs/kb/how-it-works/index.html",
+          "order": 10,
+          "section": "Knowledge Base"
+        },
+        {
+          "title": "Choosing how to onboard",
+          "path": "docs/kb/onboarding/index.html",
+          "order": 20,
+          "section": "Publish Your Docs"
+        },
+        {
+          "title": "Single-page docs",
+          "path": "docs/kb/single-page/index.html",
+          "order": 21,
+          "section": "Publish Your Docs"
+        },
+        {
+          "title": "Packaged docs",
+          "path": "docs/kb/packaged/index.html",
+          "order": 22,
+          "section": "Publish Your Docs"
+        },
+        {
+          "title": "The manifest and archive",
+          "path": "docs/kb/manifest/index.html",
+          "order": 23,
+          "section": "Publish Your Docs"
+        },
+        {
+          "title": "Contract rules and the checker",
+          "path": "docs/kb/rules/index.html",
+          "order": 24,
+          "section": "Publish Your Docs"
+        },
+        {
+          "title": "GitHub Actions",
+          "path": "docs/kb/actions/index.html",
+          "order": 25,
+          "section": "Publish Your Docs"
+        },
+        {
+          "title": "Style tokens",
+          "path": "docs/kb/style-tokens/index.html",
+          "order": 26,
+          "section": "Publish Your Docs"
+        },
+        {
+          "title": "Agent skill",
+          "path": "docs/kb/agent-skill/index.html",
+          "order": 27,
+          "section": "Publish Your Docs"
+        },
+        {
+          "title": "Registry",
+          "path": "docs/kb/registry/index.html",
+          "order": 40,
+          "section": "Run a Knowledge Base"
+        },
+        {
+          "title": "Building",
+          "path": "docs/kb/building/index.html",
+          "order": 41,
+          "section": "Run a Knowledge Base"
+        },
+        {
+          "title": "Deployment",
+          "path": "docs/kb/deployment/index.html",
+          "order": 42,
+          "section": "Run a Knowledge Base"
+        },
+        {
+          "title": "Docker and nginx",
+          "path": "docs/kb/docker-nginx/index.html",
+          "order": 43,
+          "section": "Run a Knowledge Base"
+        },
+        {
+          "title": "Private networks",
+          "path": "docs/kb/private-networks/index.html",
+          "order": 44,
+          "section": "Run a Knowledge Base"
+        },
+        {
+          "title": "Web fragment embedding",
+          "path": "docs/kb/embedding/index.html",
+          "order": 60,
+          "section": "Embed in a Host App"
+        },
+        {
+          "title": "Changelog",
+          "path": "docs/kb/changelog/index.html",
+          "order": 90,
+          "section": "Reference"
+        },
+        {
           "title": "Using the Docs Template",
           "path": "docs/template/index.html",
           "order": 100,
